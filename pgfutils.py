@@ -36,11 +36,19 @@ consistent-looking plots.
 
 """
 
+# We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
+# caches a reference to the io.open() method as part of its data loading
+# functions. This means we can't (reliably) wrap all loading functions if we're
+# asked to track opened files. Instead, the tracking is installed in
+# setup_figure() before the first import of Matplotlib (assuming the user
+# doesn't use our internal functions). Python's caching of imported modules
+# means there should be minimal impact from importing Matplotlib separately in
+# different functions.
+
 import inspect
 import json
 import os
 import os.path
-import matplotlib
 import sys
 
 
@@ -238,6 +246,8 @@ def _parse_color(value):
         The value could not be interpreted as a color.
 
     """
+    import matplotlib
+
     # Floats: for historical reasons Matplotlib requires this to be a string.
     if isinstance(value, float):
         if not (0 <= value <= 1):
@@ -252,6 +262,102 @@ def _parse_color(value):
 
     # Now we know its valid.
     return value
+
+
+def _file_tracker(to_wrap):
+    """Internal: install an opened file tracker.
+
+    To be trackable, the given callable should return some object with `name`
+    and `mode` attributes representing the filename and mode of the opened
+    file.
+
+    The docstring, name etc. of the given callable are copied to the wrapper
+    function that performs the tracking.
+
+    The set of files that have been opened so far are stored in the `filenames`
+    attribute of this function. In general, use the _list_opened_files()
+    method.
+
+    Parameters
+    ----------
+    to_wrap: callable
+        The callable to install the tracker around.
+
+    Returns
+    -------
+    Wrapper function.
+
+    """
+    import functools
+    @functools.wraps(to_wrap)
+    def wrapper(*args, **kwargs):
+        # Defer opening to the real function.
+        file = to_wrap(*args, **kwargs)
+
+        # Standard IO readers store what we need in name and mode attributes.
+        if not hasattr(file, 'name') or not hasattr(file, 'mode'):
+            return file
+
+        # Ignore files that are written to (e.g., the output figure!).
+        if 'r' not in file.mode:
+            return file
+
+        # Integers indicate file objects that were created from descriptors
+        # (e.g., opened with the low-level os.open() and then wrapped with
+        # os.fdopen()). There is no reliable way to retrieve the filename; on
+        # Linux, the command 'readlink /proc/self/fd/N' can be used provided it
+        # hasn't been renamed/deleted since. I'm leaving this as unimplemented
+        # until I find an actual usecase for doing it...
+        if isinstance(file.name, int):
+            return file
+
+        # Assume that all data files etc are within the project tree.
+        if os.path.relpath(file.name).startswith('.'):
+            return file
+
+        # Add it to our set and we're done.
+        _file_tracker.filenames.add(file.name)
+        return file
+
+    # Return the wrapper function.
+    return wrapper
+
+# Initialise the set of opened files.
+_file_tracker.filenames = set()
+
+
+def _install_file_trackers():
+    """Internal: install file trackers in likely locations.
+
+    This wraps the standard open() function as well as the io.open() function.
+    This seems to catch all uses of the standard NumPy `load` (for both .npy
+    and .npz files) and `loadtxt`, and should also work for most libraries
+    which use Python functions to open files. It won't work for anything
+    which uses low-level methods, either through the `os` module or at C level
+    in compiled modules.
+
+    Note: this needs to be run prior to importing NumPy (and therefore prior to
+    importing Matplotlib) as NumPy's data loader module stores a reference to
+    io.open which wouldn't get wrapped.
+
+    """
+    import builtins
+    import io
+    builtins.open = _file_tracker(builtins.open)
+    io.open = _file_tracker(io.open)
+
+
+def _list_opened_files():
+    """Internal: get project files which were opened by the script.
+
+    Returns
+    -------
+    list
+        A lexicographically sorted list of all files in or under the current
+        working directory that were opened for reading.
+
+    """
+    return sorted(_file_tracker.filenames)
 
 
 def setup_figure(width=1.0, height=1.0, **kwargs):
@@ -271,6 +377,11 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
 
     """
     global _config, _interactive
+
+    # Need to install our file trackers (if desired)
+    # before we import Matplotlib.
+    if 'PGFUTILS_TRACK_FILES' in os.environ:
+        _install_file_trackers()
 
     # Load configuration from a JSON file if one exists.
     if os.path.exists('pgfutils.cfg'):
@@ -292,6 +403,9 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
         for key, val in ipython.config.items():
             if val.get('pylab', '') in {'auto', 'inline'}:
                 _interactive = True
+
+    # We're now ready to start configuring Matplotlib.
+    import matplotlib
 
     # Set the backend. We don't want to overwrite the current backend if this
     # is an interactive run as the PGF backend does not implement a GUI.
@@ -373,6 +487,7 @@ def save(figure=None):
         matplotlib.pyplot.gcf() -- will be saved.
 
     """
+    import matplotlib
     from matplotlib import pyplot as plt
 
     # Get the current figure if needed.
@@ -415,6 +530,27 @@ def save(figure=None):
                 continue
             cb.solids.set_edgecolor('face')
 
+    # We have been tracking opened files and need to
+    # output our results.
+    if 'PGFUTILS_TRACK_FILES' in os.environ:
+        # The files.
+        files = '\n'.join(_list_opened_files())
+
+        # Figure out where to print it.
+        dest = os.environ.get('PGFUTILS_TRACK_FILES') or '1'
+
+        # stdout.
+        if dest == '1':
+            sys.stdout.write(files)
+
+        # stderr.
+        elif dest == '2':
+            sys.stderr.write(files)
+
+        # A named file.
+        else:
+            with open(dest, 'w') as f:
+                f.write(files)
 
     # Interactive mode: show the figure.
     global _interactive
