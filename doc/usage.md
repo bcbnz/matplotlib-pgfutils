@@ -21,9 +21,9 @@ setup_figure(width=0.6, height=0.4)
 ```
 
 This sets the figure to take up 60% of the `\textwidth` of the TeX document,
-and 40% of the `\textheight` (see [Config](config.md) for details of how to
-configure the height and width of your document). The width and height can also
-be set to specific sizes:
+and 40% of the `\textheight` (see the [configuration documentation](config.md)
+for details of how to configure the height and width of your document). The
+width and height can also be set to specific sizes:
 
 ```python
 from pgfutils import setup_figure, save
@@ -79,5 +79,5 @@ that you need to save a particular figure object, pass it to the function:
 
 The filename for the output figure is automatically generated as the name of
 the script with the extension replaced with '.pypgf'. For example, in a script
-called 'magnitude_stats.py', calling `save()` will generate a figure named
+called `magnitude_stats.py`, calling `save()` will generate a figure named
 `magnitude_stats.pypgf`.
