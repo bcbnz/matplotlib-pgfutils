@@ -37,7 +37,7 @@ configuration:
     "legend_font_size": 10,
     "line_width": 1,
     "axes_line_width": 0.6,
-    "figure_color": "white",
+    "figure_color": null,
     "axes_color": "white",
 }
 ```

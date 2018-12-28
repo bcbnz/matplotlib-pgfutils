@@ -64,7 +64,7 @@ _config = {
         'axes_line_width': 0.6,
         'text_width': 4.79,
         'text_height': 7.63,
-        'figure_color': 'white',
+        'figure_color': (1, 1, 1, 0),
         'axes_color': 'white',
     },
 
@@ -143,8 +143,8 @@ def _update_config(pgfopts, rcParams, preamble):
 
     # Handle colours.
     for k in {'figure_color', 'axes_color'}:
-        v = pgfopts.pop(k, None)
-        if v is not None:
+        v = pgfopts.pop(k, -1)
+        if v != -1:
             _config['pgfutils'][k] = _parse_color(v)
 
     # Handle dimensions.
@@ -247,6 +247,10 @@ def _parse_color(value):
 
     """
     import matplotlib
+
+    # Transparent.
+    if value is None:
+        return (1, 1, 1, 0)
 
     # Floats: for historical reasons Matplotlib requires this to be a string.
     if isinstance(value, float):
