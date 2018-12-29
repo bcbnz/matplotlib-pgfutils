@@ -76,6 +76,7 @@ _config = {
 
     'postprocessing': {
         'fix_raster_dir': True,
+        'tikzpicture': False,
     }
 }
 
@@ -184,7 +185,7 @@ def _update_config(pgfopts, rcParams, preamble, postprocessing):
         _config['preamble'] = preamble.strip()
 
     # Update any postprocessing options.
-    for k in {'fix_raster_dir',}:
+    for k in {'fix_raster_dir', 'tikzpicture'}:
         v = postprocessing.pop(k, None)
         if v is not None:
             _config['postprocessing'][k] = bool(v)
@@ -608,6 +609,12 @@ def save(figure=None):
             repl = r"\1{0:s}/\2".format(prefix)
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
+    # Use the tikzpicture environment rather than pgfpicture.
+    if _config['postprocessing']['tikzpicture']:
+        expr = re.compile(r"\\(begin|end){pgfpicture}")
+        repl = r"\\\1{tikzpicture}"
+        pp_funcs.append(lambda s: re.sub(expr, repl, s))
+
     # Postprocess the figure, moving it into the final destination.
     with open(mpname, 'r') as infile, open(figname, 'w') as outfile:
         # Update the creator line at the start of the header.
@@ -624,8 +631,14 @@ def save(figure=None):
         outfile.write("}\n")
 
         # Copy the preamble instructions.
-        for n in range(4):
-            outfile.write(infile.readline())
+        outfile.write(infile.readline())
+        outfile.write(infile.readline())
+        line = infile.readline()
+        if _config['postprocessing']['tikzpicture']:
+            outfile.write("%%   \\usepackage{tikz}\n")
+        else:
+            outfile.write(line)
+        outfile.write(infile.readline())
 
         # If we've updated the raster image directory, we can delete the
         # instructions about getting them to appear.
