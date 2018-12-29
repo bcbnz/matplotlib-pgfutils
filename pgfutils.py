@@ -189,6 +189,11 @@ def _update_config(pgfopts, rcParams, preamble, postprocessing):
         if v is not None:
             _config['postprocessing'][k] = bool(v)
 
+    # Any other option is unknown.
+    if postprocessing:
+        k = postprocessing.keys()
+        raise ValueError("Unknown postprocessing option(s): {}".format(", ".join(k)))
+
 
 def _parse_dimension(dim):
     """Internal: turn a dimension into inches for matplotlib.
