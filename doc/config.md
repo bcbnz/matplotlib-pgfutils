@@ -4,18 +4,20 @@ Configuration
 Primary configuration is done through a configuration file. This should be
 named `pgfutils.cfg` and placed in the top-level directory, i.e., where you run
 the scripts from. The configuration file is in [JSON format][1], and should
-consist of one object (in Python terms, a dictionary). Any combination of three
+consist of one object (in Python terms, a dictionary). Any combination of four
 items can be present:
 
 * `pgfutils`: Configuration options for the pgfutils module.
 * `rcParams`: Options to set in Matplotlib's `rcParams` configuration.
 * `preamble`: The TeX preamble to use when measuring string widths etc.
+* `postprocessing`: Enable or disable various postprocessing options.
 
 The following sections detail use of these items.
 
 Per-figure configuration can be done in the `setup_figure()` call in the
 script. Each of the `pgfutils` options can be given as keyword arguments, and
-the TeX preamble can also be passed in using the `preamble` keyword. Options
+the TeX preamble and postprocessing options can also be passed in using the
+`preamble` and `postprocessing` keywords respectively.  Options
 given through this call override those in the configuration file.
 
 
@@ -149,6 +151,22 @@ For convenience, the preamble can also be specified as an array (list) of lines:
   ]
 }
 ```
+
+
+Postprocessing
+--------------
+
+### `fix_raster_dir` (Boolean, default True)
+
+The PGF backend has no knowledge of the directory structure. When creating a
+rasterized image to include in the figure (e.g., a PNG image of an array you've
+used `imshow` on), it assumes the figure will be in the same directory as the
+main TeX file. Accordingly, the image is included using `\pgfimage{name.png}`.
+If you have your figures in a separate directory such as `figures/`, inputting
+the figure will fail. There are TeX packages which can work around this, but it
+is probably simpler to let pgfutils take care of it. If the `fix_raster_dir`
+postprocessing option is set to True, any calls to `\pgfimage` will be updated
+to include the relative directory of the figure.
 
 
 [1]: https://en.wikipedia.org/wiki/JSON

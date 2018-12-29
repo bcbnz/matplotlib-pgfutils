@@ -49,6 +49,7 @@ import inspect
 import json
 import os
 import os.path
+import re
 import sys
 
 
@@ -71,7 +72,11 @@ _config = {
     'rcParams': {
     },
 
-    'preamble': ''
+    'preamble': '',
+
+    'postprocessing': {
+        'fix_raster_dir': True,
+    }
 }
 
 # If the script has been run in an interactive mode (currently, only IPython's
@@ -105,6 +110,7 @@ def _config_from_json(fn):
     pgfopts = opts.pop('pgfutils', {})
     rcParams = opts.pop('rcParams', {})
     preamble = opts.pop('preamble', None)
+    postprocessing = opts.pop('postprocessing', {})
 
     # Anything left in the options: unknown section.
     if opts:
@@ -112,16 +118,16 @@ def _config_from_json(fn):
         raise ValueError("Unknown configuration section(s): {}".format(", ".join(k)))
 
     # Update the config with these options.
-    if pgfopts or rcParams or preamble:
-        _update_config(pgfopts, rcParams, preamble)
+    if pgfopts or rcParams or preamble or postprocessing:
+        _update_config(pgfopts, rcParams, preamble, postprocessing)
 
 
-def _update_config(pgfopts, rcParams, preamble):
+def _update_config(pgfopts, rcParams, preamble, postprocessing):
     """Internal: update the configuration.
 
     Parameters
     ----------
-    pgfopts, rcParams: dictionary
+    pgfopts, rcParams, postprocessing: dictionary
         pgfutils and Matplotlib settings.
     preamble: string or list of strings
         TeX preamble.
@@ -176,6 +182,12 @@ def _update_config(pgfopts, rcParams, preamble):
         if isinstance(preamble, list):
             preamble = '\n'.join(preamble)
         _config['preamble'] = preamble.strip()
+
+    # Update any postprocessing options.
+    for k in {'fix_raster_dir',}:
+        v = postprocessing.pop(k, None)
+        if v is not None:
+            _config['postprocessing'][k] = bool(v)
 
 
 def _parse_dimension(dim):
@@ -393,7 +405,8 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
 
     # And anything given in the function call.
     preamble = kwargs.pop('preamble', None)
-    _update_config(kwargs, {}, preamble)
+    postprocessing = kwargs.pop('postprocessing', {})
+    _update_config(kwargs, {}, preamble, postprocessing)
 
     # Reset our interactive flag on each call.
     _interactive = False
@@ -491,6 +504,8 @@ def save(figure=None):
         matplotlib.pyplot.gcf() -- will be saved.
 
     """
+    global _config, _interactive
+
     import matplotlib
     from matplotlib import pyplot as plt
 
@@ -556,16 +571,82 @@ def save(figure=None):
             with open(dest, 'w') as f:
                 f.write(files)
 
-    # Interactive mode: show the figure.
-    global _interactive
+    # Interactive mode: show the figure rather than saving.
     if _interactive:
         plt.show()
+        return
 
-    # Non-interactive: save it.
-    else:
-        # Look at the next frame up for the name of the calling script.
-        name, ext = os.path.splitext(inspect.getfile(sys._getframe(1)))
+    # Look at the next frame up for the name of the calling script.
+    name, ext = os.path.splitext(inspect.getfile(sys._getframe(1)))
 
-        # Replace the extension and save.
-        figure.savefig(name + ".pgf")
-        os.rename(name + ".pgf", name + ".pypgf")
+    # The initial Matplotlib output file, and the final figure file.
+    mpname = name + ".pgf"
+    figname = name + ".pypgf"
+
+    # Get Matplotlib to save it.
+    figure.savefig(mpname)
+
+    # List of all postprocessing functions we are running on this figure.
+    # Each should take in a single line as a string, and return the line with
+    # any required modifications.
+    pp_funcs = []
+
+    # Add the appropriate directory prefix to all raster images
+    # included via \pgfimage.
+    if _config['postprocessing']['fix_raster_dir']:
+        figdir = os.path.dirname(figname) or '.'
+
+        # Only apply this if the figure is not in the top-level directory.
+        if not os.path.samefile(figdir, os.curdir):
+            prefix = os.path.relpath(figdir)
+            expr = re.compile(r"(\\pgfimage(?:\[.+?\])?{)(.+?)}")
+            repl = r"\1{0:s}/\2".format(prefix)
+            pp_funcs.append(lambda s: re.sub(expr, repl, s))
+
+    # Postprocess the figure, moving it into the final destination.
+    with open(mpname, 'r') as infile, open(figname, 'w') as outfile:
+        # Update the creator line at the start of the header.
+        line = infile.readline()[:-1]
+        outfile.write(line)
+        outfile.write(", matplotlib-pgfutils\n")
+
+        # Update the \input instructions.
+        outfile.write(infile.readline())
+        outfile.write(infile.readline())
+        _ = infile.readline()
+        outfile.write("%%   \\input{")
+        outfile.write(figname)
+        outfile.write("}\n")
+
+        # Copy the preamble instructions.
+        for n in range(4):
+            outfile.write(infile.readline())
+
+        # If we've updated the raster image directory, we can delete the
+        # instructions about getting them to appear.
+        if _config['postprocessing']['fix_raster_dir']:
+            for n in range(7):
+                _ = infile.readline()
+
+        # Otherwise we need to copy them over.
+        else:
+            for n in range(7):
+                outfile.write(infile.readline())
+
+        # Avoid postprocessing the rest of the header (which includes the
+        # preamble which was used). The first non-header line is \begingroup
+        # which we don't want to change anyway.
+        line = infile.readline()
+        while line[0] == '%':
+            outfile.write(line)
+            line = infile.readline()
+        outfile.write(line)
+
+        # Apply the postprocessing to the remainder of the file.
+        for line in infile:
+            for func in pp_funcs:
+                line = func(line)
+            outfile.write(line)
+
+    # Delete the original file.
+    os.remove(mpname)
