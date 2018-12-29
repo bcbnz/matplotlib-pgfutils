@@ -62,6 +62,7 @@ Documentation is available in Markdown format in the doc/ directory:
 
 * [Usage](doc/usage.md)
 * [Configuration](doc/config.md)
+* [Interactive mode](doc/interactive.md)
 
 
 License

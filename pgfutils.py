@@ -417,15 +417,17 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     # Reset our interactive flag on each call.
     _interactive = False
 
-    # If we're running under IPython, see if it is in pylab mode.
+    # If we're running under IPython, see if there is an event loop in use.
+    # Unfortunately, the matplotlib.rcParams['interactive'] (or equivalently,
+    # matplotlib.is_interactive()) don't appear to propagate when IPython runs
+    # a script so we can't test those.
     try:
         ipython = get_ipython()
     except NameError:
         pass
     else:
-        for key, val in ipython.config.items():
-            if val.get('pylab', '') in {'auto', 'inline'}:
-                _interactive = True
+        if ipython.active_eventloop is not None:
+            _interactive = True
 
     # We're now ready to start configuring Matplotlib.
     import matplotlib
