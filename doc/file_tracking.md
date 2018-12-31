@@ -39,3 +39,6 @@ NumPy file operations will not be noticed. This seems to mainly affect CSV or
 other text files; `.npy` files are opened through a separate mechanism which
 appears to still get tracked. Nonetheless, it is recommended you import and
 call `setup_figure` at the very start of your script.
+
+For an example of using this file tracking in a build system, see the [latexmk
+integration](latexmk.md) document.
