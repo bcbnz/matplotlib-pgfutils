@@ -320,10 +320,6 @@ def _file_tracker(to_wrap):
         if not hasattr(file, 'name') or not hasattr(file, 'mode'):
             return file
 
-        # Ignore files that are written to (e.g., the output figure!).
-        if 'r' not in file.mode:
-            return file
-
         # Integers indicate file objects that were created from descriptors
         # (e.g., opened with the low-level os.open() and then wrapped with
         # os.fdopen()). There is no reliable way to retrieve the filename; on
@@ -333,12 +329,22 @@ def _file_tracker(to_wrap):
         if isinstance(file.name, int):
             return file
 
-        # Assume that all data files etc are within the project tree.
+        # Everything we are interested in is within the project tree.
         if os.path.relpath(file.name).startswith('.'):
             return file
 
-        # Add it to our set and we're done.
-        _file_tracker.filenames.add(file.name)
+        # Assume files that are read are dependencies.
+        if 'r' in file.mode:
+            _file_tracker.filenames.add(("r", file.name))
+
+        # Binary files being written could be rasterised parts of the image
+        # being saved as PNGs. Confirm this by checking the filename against
+        # the pattern that the PGF backend uses.
+        elif file.mode == 'wb':
+            if re.match("^.+-img\d+.png$", file.name):
+                _file_tracker.filenames.add(("w", file.name))
+
+        # Done.
         return file
 
     # Return the wrapper function.
@@ -375,8 +381,11 @@ def _list_opened_files():
     Returns
     -------
     list
-        A lexicographically sorted list of all files in or under the current
-        working directory that were opened for reading.
+        A list of tuples (mode, filename) of files in or under the current
+        directory. Entries with mode 'r' were opened for reading and are
+        assumed to be dependencies of the generated figure. Entries with mode
+        'w' were opened for writing and are rasterised graphics included in the
+        final figure. The list is sorted by mode and then filename.
 
     """
     return sorted(_file_tracker.filenames)
@@ -557,11 +566,26 @@ def save(figure=None):
                 continue
             cb.solids.set_edgecolor('face')
 
+    # Interactive mode: show the figure rather than saving.
+    if _interactive:
+        plt.show()
+        return
+
+    # Look at the next frame up for the name of the calling script.
+    name, ext = os.path.splitext(inspect.getfile(sys._getframe(1)))
+
+    # The initial Matplotlib output file, and the final figure file.
+    mpname = name + ".pgf"
+    figname = name + ".pypgf"
+
+    # Get Matplotlib to save it.
+    figure.savefig(mpname)
+
     # We have been tracking opened files and need to
     # output our results.
     if 'PGFUTILS_TRACK_FILES' in os.environ:
         # The files.
-        files = '\n'.join(_list_opened_files())
+        files = '\n'.join([':'.join(f) for f in _list_opened_files()])
 
         # Figure out where to print it.
         dest = os.environ.get('PGFUTILS_TRACK_FILES') or '1'
@@ -578,21 +602,6 @@ def save(figure=None):
         else:
             with open(dest, 'w') as f:
                 f.write(files)
-
-    # Interactive mode: show the figure rather than saving.
-    if _interactive:
-        plt.show()
-        return
-
-    # Look at the next frame up for the name of the calling script.
-    name, ext = os.path.splitext(inspect.getfile(sys._getframe(1)))
-
-    # The initial Matplotlib output file, and the final figure file.
-    mpname = name + ".pgf"
-    figname = name + ".pypgf"
-
-    # Get Matplotlib to save it.
-    figure.savefig(mpname)
 
     # List of all postprocessing functions we are running on this figure.
     # Each should take in a single line as a string, and return the line with
