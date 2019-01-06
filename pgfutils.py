@@ -550,14 +550,21 @@ def save(figure=None):
         # https://github.com/matplotlib/matplotlib/issues/1188
         # https://github.com/matplotlib/matplotlib/pull/4481
         # https://github.com/matplotlib/matplotlib/commit/854f74a
-        #
-        # So far I've found colorbars from images (imshow etc) and collections
-        # (scatter plots and the like).
-        for obj in axes.images + axes.collections:
-            cb = obj.colorbar
-            if not cb:
-                continue
 
+        # Gather a set of colorbars.  This includes colorbars from images
+        # (imshow etc), collections (e.g., scatter plots), and contour plot
+        # lines (the roundabout _current_image way -- there doesn't appear to
+        # be any other reference from the axes to the QuadContourSet object).
+        colorbars = set()
+        colorbars.update(im.colorbar for im in axes.images if im.colorbar)
+        colorbars.update(coll.colorbar for coll in axes.collections if coll.colorbar)
+        if axes._current_image and axes._current_image.colorbar:
+            colorbars.add(axes._current_image.colorbar)
+
+        # And process them.
+        for cb in colorbars:
+            if not cb.solids:
+                continue
             # Ignore rasterized or transparent colorbars.
             # Note that alpha=None is the same as alpha=1.
             if cb.solids.get_rasterized():
