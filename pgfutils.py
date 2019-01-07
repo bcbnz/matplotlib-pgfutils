@@ -228,7 +228,7 @@ def _parse_dimension(dim):
         'cm': 2.54,
         'mm': 25.4,
         'in': 1,
-        'pt': 72,
+        'pt': 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
     }.get(unit, None)
 
     # Unknown unit.
