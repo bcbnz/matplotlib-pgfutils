@@ -66,6 +66,9 @@ Documentation is available in Markdown format in the doc/ directory:
 * [File tracking](doc/file_tracking.md)
 * [Latexmk integration](doc/latexmk.md)
 
+An example configuration file showing the default settings is given in
+[pgfutils.cfg](pgfutils.cfg).
+
 
 License
 -------

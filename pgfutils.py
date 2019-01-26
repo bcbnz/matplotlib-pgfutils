@@ -45,245 +45,260 @@ consistent-looking plots.
 # means there should be minimal impact from importing Matplotlib separately in
 # different functions.
 
+import configparser
 import inspect
-import json
 import os
 import os.path
 import re
 import sys
 
 
-# The current configuration.
-_config = {
-    'pgfutils': {
-        'engine': 'xelatex',
-        'font_family': 'serif',
-        'font_name': None,
-        'font_size': 10,
-        'legend_font_size': 10,
-        'line_width': 1,
-        'axes_line_width': 0.6,
-        'text_width': 4.79,
-        'text_height': 7.63,
-        'figure_color': (1, 1, 1, 0),
-        'axes_color': 'white',
-    },
-
-    'rcParams': {
-    },
-
-    'preamble': '',
-
-    'postprocessing': {
-        'fix_raster_dir': True,
-        'tikzpicture': False,
-    }
-}
-
-# If the script has been run in an interactive mode (currently, only IPython's
-# pylab mode) then we will display the figure in the save() call rather than
-# saving it.
-# Interactivity is tested each time setup_figure() is called. This global
-# stores the latest result to avoid running the test twice (we need it in
-# setup_figure() to avoid setting the backend if interactive, and then in
-# save()).
-_interactive = False
+class DimensionError(Exception):
+    """A configuration entry could not be converted to a dimension."""
+    pass
 
 
-def _config_from_json(fn):
-    """Internal: update the configuration from a JSON file.
+class ColorError(Exception):
+    """A configuration entry could not be converted to a color."""
+    pass
 
-    Parameters
-    ----------
-    fn: string
-        The filename to load the configuration from.
+
+class PgfutilsParser(configparser.ConfigParser):
+    """Custom configuration parser with Matplotlib dimension and color support.
 
     """
-    # Parse the file.
-    with open(fn, 'r') as f:
-        opts = json.load(f)
+    # Regular expression to parse a dimension into size and (optional) unit.
+    _dimre = re.compile(r"^\s*(?P<size>\d+(?:\.\d*)?)\s*(?P<unit>.+?)?\s*$")
 
-    # Check we have an object at the root of the JSON.
-    if not isinstance(opts, dict):
-        raise ValueError("JSON configuration must be an object (dictionary).")
+    # Conversion factors (divisors) to go from the given unit to inches.
+    _dimconv = {
+        'cm': 2.54,
+        'centimetre': 2.54,
+        'centimeter': 2.54,
+        'centimetres': 2.54,
+        'centimeters': 2.54,
+        'mm': 25.4,
+        'millimetre': 25.4,
+        'millimeter': 25.4,
+        'millimetres': 25.4,
+        'millimeters': 25.4,
+        'in': 1,
+        'inch': 1,
+        'inches': 1,
+        'pt': 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
+        'point': 72.27,
+        'points': 72.27,
+    }
 
-    # Pull out the sections.
-    pgfopts = opts.pop('pgfutils', {})
-    rcParams = opts.pop('rcParams', {})
-    preamble = opts.pop('preamble', None)
-    postprocessing = opts.pop('postprocessing', {})
 
-    # Anything left in the options: unknown section.
-    if opts:
-        k = opts.keys()
-        raise ValueError("Unknown configuration section(s): {}".format(", ".join(k)))
+    def read_kwargs(self, **kwargs):
+        """Read configuration options from keyword arguments.
 
-    # Update the config with these options.
-    if pgfopts or rcParams or preamble or postprocessing:
-        _update_config(pgfopts, rcParams, preamble, postprocessing)
+        """
+        # Dictionary of values to load.
+        d = {}
+
+        # Option -> section lookup table.
+        lookup = {}
+
+        # Go through all existing options.
+        for section, options in self._sections.items():
+            # Can't specify rcParams through kwargs.
+            if section == 'rcParams':
+                continue
+
+            # Add to our tables.
+            d[section] = {}
+            for option in options.keys():
+                lookup[option] = section
+
+        # Go through all given arguments.
+        for key, value in kwargs.items():
+            # Check this option already exists.
+            section = lookup.get(key, None)
+            if section is None:
+                raise KeyError("Unknown configuration option {}.".format(key))
+
+            # Save it.
+            d[section][key] = value
+
+        # And then read the dictionary in.
+        return self.read_dict(d)
 
 
-def _update_config(pgfopts, rcParams, preamble, postprocessing):
-    """Internal: update the configuration.
+    def getdimension(self, section, option, **kwargs):
+        """Return a configuration entry as a dimension in inches.
 
-    Parameters
-    ----------
-    pgfopts, rcParams, postprocessing: dictionary
-        pgfutils and Matplotlib settings.
-    preamble: string or list of strings
-        TeX preamble.
+        The dimension should be in the format '<value><unit>', where the unit
+        can be 'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is
+        assumed to be in inches. Note that points refer to TeX points (72.27
+        per inch) rather than Postscript points (72 per inch).
+
+        Parameters
+        ----------
+        section, option: string
+            The section and option keys to retrieve.
+
+        Returns
+        -------
+        float: The dimension in inches.
+
+        Raises
+        ------
+        DimensionError:
+            The dimension is empty or not recognised.
+
+        """
+        # Get the string version of the dimension.
+        dim = self.get(section, option, **kwargs).strip().lower()
+
+        # Check for an empty string.
+        if not dim:
+            msg = "Dimension {}.{} cannot be set to an empty value.".format(section, option)
+            raise DimensionError(msg)
+
+        # Try to parse it.
+        m = self._dimre.match(dim)
+        if not m:
+            raise DimensionError("{}.{}: could not parse {} as a dimension.".format(section, option, dim))
+
+        # Pull out the pieces.
+        groups = m.groupdict()
+        size = float(groups['size'])
+        unit = groups.get('unit', '').lower()
+
+        # No unit: already in inches.
+        if not unit:
+            return size
+
+        # Pick out the divisor to convert into inches.
+        factor = self._dimconv.get(unit, None)
+
+        # Unknown unit.
+        if factor is None:
+            raise DimensionError("{}.{}: unknown unit {}.".format(section, option, unit))
+
+        # Do the conversion.
+        return size / factor
+
+
+    def getcolor(self, section, option, **kwargs):
+        """Return a configuration entry as a Matplotlib color.
+ 
+        Recognised color formats are:
+            * Named colors (red, yellow, etc.)
+            * Cycle colors (C1, C2 etc.)
+            * Tuples (r, g, b) or (r, g, b, a) with floating-point entries in
+              [0, 1]
+            * A floating-point value in [0, 1] for grayscale
+            * 'none' or an empty value for transparent.
+ 
+        Parameters
+        ----------
+        section, option: string
+            The section and option keys to retrieve.
+
+        Returns
+        -------
+        matplotlib-compatible colour.
+
+        Raises
+        ------
+        ColorError
+            The value could not be interpreted as a color.
+
+        """
+        import matplotlib
+
+        # Retrieve the string value. Empty values are interpreted as none.
+        value = self.get(section, option, **kwargs).strip() or 'none'
+
+        # Transparent.
+        if value == 'none':
+            return 'none'
+
+        # Single floating point number: grayscale.
+        try:
+            gray = float(value)
+        except ValueError:
+            pass
+        else:
+            # For historical reasons Matlotlib requires this to be a string.
+            if not (0 <= gray <= 1):
+                raise ColorError("{}.{}: greyscale floats must be in [0, 1].".format(section, option))
+            return value
+
+        # Nth color in the cycle (i.e., C1, C2 etc), or a named color.
+        # Unfortunately, this returns True for grayscale values outside [0, 1]
+        # so we have to do our own check above.
+        if matplotlib.colors.is_color_like(value):
+            return value
+
+        # Tuple or list.
+        if (value[0] == '(' and value[-1] == ')') or (value[0] == '[' and value[-1] == ']'):
+            entries = value[1:-1].split(',')
+
+            # Can be RGB or RGBA.
+            if not (2 < len(entries) < 5):
+                raise ColorError("{}.{}: RGBA colors must have 3 or 4 entries.".format(section, option))
+
+            # Attempt to convert to floats.
+            try:
+                float_entries = tuple(map(float, entries))
+            except ValueError:
+                raise ColorError("{}.{}: RGBA colors must be floating point.".format(section, option)) from None
+
+            # And get Matplotlib to convert to a color.
+            try:
+                rgba = matplotlib.colors.to_rgba(float_entries)
+            except ValueError as e:
+                raise ColorError("{}.{}: {}.".format(section, option, e)) from None
+
+            # Done.
+            return rgba
+
+        # Not a format we know.
+        raise ColorError("{}.{}: could not interpret '{}' as a color.".format(section, option, value))
+
+
+# The current configuration.
+_config = PgfutilsParser()
+
+def _config_reset():
+    """Internal: reset the configuration to the default state.
 
     """
     global _config
+    _config.clear()
+    _config.read_dict({
+        'tex': {
+           'engine': 'xelatex',
+           'text_width': '345 points',
+           'text_height': '550 points',
+           'num_columns': '1',
+           'columnsep': '10 points',
+        },
 
-    # Handle strings.
-    for k in {'engine', 'font_family'}:
-        v = pgfopts.pop(k, None)
-        if v is not None:
-            _config['pgfutils'][k] = str(v)
+        'pgfutils': {
+           'preamble': '',
+           'font_family': 'serif',
+           'font_name': '',
+           'font_size': '10',
+           'legend_font_size': '10',
+           'line_width': '1',
+           'axes_line_width': '0.6',
+           'figure_background': '',
+           'axes_background': 'white',
+       },
 
-    # Handle strings that can also be None.
-    for k in {'font_name',}:
-        v = pgfopts.pop(k, -1)
-        if v != -1:
-            _config['pgfutils'][k] = v
+       'rcParams': {
+       },
 
-    # Handle colours.
-    for k in {'figure_color', 'axes_color'}:
-        v = pgfopts.pop(k, -1)
-        if v != -1:
-            _config['pgfutils'][k] = _parse_color(v)
-
-    # Handle dimensions.
-    for k in {'text_width', 'text_height'}:
-        v = pgfopts.pop(k, None)
-        if v is not None:
-            _config['pgfutils'][k] = _parse_dimension(v)
-
-    # Handle sizes (fonts, thicknesses etc).
-    for k in {'font_size', 'legend_font_size', 'line_width', 'axes_line_width'}:
-        v = pgfopts.pop(k, None)
-        if v is not None:
-            if isinstance(v, (int, float)):
-                _config['pgfutils'][k] = v
-            else:
-                _config['pgfutils'][k] = float(v)
-
-    # Any other option is unknown.
-    if pgfopts:
-        k = pgfopts.keys()
-        raise ValueError("Unknown pgfutils option(s): {}".format(", ".join(k)))
-
-    # Can just copy any specified rcParams over.
-    _config['rcParams'].update(rcParams)
-
-    # Save the preamble if one was given.
-    # If the preamble is a list, turn it into a string first.
-    if preamble is not None:
-        if isinstance(preamble, list):
-            preamble = '\n'.join(preamble)
-        _config['preamble'] = preamble.strip()
-
-    # Update any postprocessing options.
-    for k in {'fix_raster_dir', 'tikzpicture'}:
-        v = postprocessing.pop(k, None)
-        if v is not None:
-            _config['postprocessing'][k] = bool(v)
-
-    # Any other option is unknown.
-    if postprocessing:
-        k = postprocessing.keys()
-        raise ValueError("Unknown postprocessing option(s): {}".format(", ".join(k)))
-
-
-def _parse_dimension(dim):
-    """Internal: turn a dimension into inches for matplotlib.
-
-    Parameters
-    ----------
-    dim: string or float
-        If a float, it is assumed to be in inches already. Otherwise, the
-        dimension as a string '<value><unit>', where unit can be 'cm', 'mm',
-        'in', or 'pt'. If a unit is not given, it is assumed to be inches.
-
-    Returns
-    -------
-    float: The dimension in inches.
-
-    Raises
-    ------
-    ValueError:
-        Unit is unknown, or the value cannot be converted to a float.
-
-    """
-    if isinstance(dim, float):
-        return dim
-
-    # Break into components.
-    dim = dim.strip().lower()
-    size, unit = dim[:-2], dim[-2:]
-
-    # Pick out the divisor to convert into inches.
-    factor = {
-        'cm': 2.54,
-        'mm': 25.4,
-        'in': 1,
-        'pt': 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
-    }.get(unit, None)
-
-    # Unknown unit.
-    if factor is None:
-        # If the entire input is a float, assume its already in inches.
-        try:
-            val = float(dim)
-        except ValueError:
-            raise ValueError("Unknown unit {0:s}.".format(unit))
-        return val
-
-    # Do the conversion.
-    return float(size) / factor
-
-
-def _parse_color(value):
-    """Internal: check the value can be used as a Matplotlib color.
-
-    Parameters
-    ----------
-    value: string, float, tuple of floats
-        The input color value. Can be a named colour, a tuple (r, g, b), a
-        tuple (r, g, b, a), a floating-point value in [0, 1] for grayscale, or
-        'none' for transparent.
-
-    Returns
-    -------
-    matplotlib-compatible colour.
-
-    Raises
-    ------
-    ValueError
-        The value could not be interpreted as a color.
-
-    """
-    import matplotlib
-
-    # Transparent.
-    if value is None:
-        return (1, 1, 1, 0)
-
-    # Floats: for historical reasons Matplotlib requires this to be a string.
-    if isinstance(value, float):
-        if not (0 <= value <= 1):
-            raise ValueError("Greyscale floats must be in [0, 1].")
-        value = str(value)
-
-    # Matplotlib provides a function to check this is valid.
-    # Technically, this could do the [0, 1] check above, but this would result
-    # in a less obvious error message.
-    if not matplotlib.colors.is_color_like(value):
-        raise ValueError("{} could not be interpreted as a color.".format(value))
-
-    # Now we know its valid.
-    return value
+       'postprocessing': {
+           'fix_raster_paths': 'true',
+           'tikzpicture': 'false',
+       }
+    })
 
 
 def _file_tracker(to_wrap):
@@ -391,6 +406,16 @@ def _list_opened_files():
     return sorted(_file_tracker.filenames)
 
 
+# If the script has been run in an interactive mode (currently, if it is
+# running under IPython in a mode with an event loop) then we will display the
+# figure in the save() call rather than saving it.
+# Interactivity is tested each time setup_figure() is called. This global
+# stores the latest result to avoid running the test twice (we need it in
+# setup_figure() to avoid setting the backend if interactive, and then in
+# save()).
+_interactive = False
+
+
 def setup_figure(width=1.0, height=1.0, **kwargs):
     """Set up matplotlib figures for PGF output.
 
@@ -414,14 +439,16 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     if 'PGFUTILS_TRACK_FILES' in os.environ:
         _install_file_trackers()
 
-    # Load configuration from a JSON file if one exists.
+    # Reset the configuration.
+    _config_reset()
+
+    # Load configuration from a local file if one exists.
     if os.path.exists('pgfutils.cfg'):
-        _config_from_json('pgfutils.cfg')
+        _config.read('pgfutils.cfg')
 
     # And anything given in the function call.
-    preamble = kwargs.pop('preamble', None)
-    postprocessing = kwargs.pop('postprocessing', {})
-    _update_config(kwargs, {}, preamble, postprocessing)
+    if kwargs:
+        _config.read_kwargs(**kwargs)
 
     # Reset our interactive flag on each call.
     _interactive = False
@@ -447,10 +474,10 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
         matplotlib.use('pgf')
 
     # Specify which TeX engine we are using.
-    matplotlib.rcParams['pgf.texsystem'] = _config['pgfutils']['engine']
+    matplotlib.rcParams['pgf.texsystem'] = _config['tex']['engine']
 
     # Custom TeX preamble.
-    matplotlib.rcParams['pgf.preamble'] = _config['preamble']
+    matplotlib.rcParams['pgf.preamble'] = _config['pgfutils']['preamble']
 
     # Clear the existing lists of specific font names.
     matplotlib.rcParams['font.sans-serif'] = []
@@ -472,8 +499,8 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
         matplotlib.rcParams[k].append(_config['pgfutils']['font_name'])
 
     # Set the font sizes.
-    matplotlib.rcParams['font.size'] = _config['pgfutils']['font_size']
-    matplotlib.rcParams['legend.fontsize'] = _config['pgfutils']['legend_font_size']
+    matplotlib.rcParams['font.size'] = _config['pgfutils'].getfloat('font_size')
+    matplotlib.rcParams['legend.fontsize'] = _config['pgfutils'].getfloat('legend_font_size')
 
     # Don't use Unicode in the figures. If this is not disabled, the PGF
     # backend can replace some characters with unicode variants, and these
@@ -481,21 +508,21 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     matplotlib.rcParams['axes.unicode_minus'] = False
 
     # Line widths.
-    matplotlib.rcParams['axes.linewidth'] = _config['pgfutils']['axes_line_width']
-    matplotlib.rcParams['lines.linewidth'] = _config['pgfutils']['line_width']
+    matplotlib.rcParams['axes.linewidth'] = _config['pgfutils'].getfloat('axes_line_width')
+    matplotlib.rcParams['lines.linewidth'] = _config['pgfutils'].getfloat('line_width')
 
     # Colours.
-    matplotlib.rcParams['figure.facecolor'] = _config['pgfutils']['figure_color']
-    matplotlib.rcParams['savefig.facecolor'] = _config['pgfutils']['figure_color']
-    matplotlib.rcParams['axes.facecolor'] = _config['pgfutils']['axes_color']
+    matplotlib.rcParams['figure.facecolor'] = _config['pgfutils'].getcolor('figure_background')
+    matplotlib.rcParams['savefig.facecolor'] = _config['pgfutils'].getcolor('figure_background')
+    matplotlib.rcParams['axes.facecolor'] = _config['pgfutils'].getcolor('axes_background')
 
     # Set the figure size.
     try:
-        w = width * float(_config['pgfutils']['text_width'])
+        w = width * _config['tex'].getdimension('text_width')
     except TypeError:
         w = _parse_dimension(width)
     try:
-        h = height * float(_config['pgfutils']['text_height'])
+        h = height * _config['tex'].getdimension('text_height')
     except TypeError:
         h = _parse_dimension(height)
     matplotlib.rcParams['figure.figsize'] = [w, h]
@@ -617,7 +644,7 @@ def save(figure=None):
 
     # Add the appropriate directory prefix to all raster images
     # included via \pgfimage.
-    if _config['postprocessing']['fix_raster_dir']:
+    if _config['postprocessing'].getboolean('fix_raster_paths'):
         figdir = os.path.dirname(figname) or '.'
 
         # Only apply this if the figure is not in the top-level directory.
@@ -628,7 +655,7 @@ def save(figure=None):
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Use the tikzpicture environment rather than pgfpicture.
-    if _config['postprocessing']['tikzpicture']:
+    if _config['postprocessing'].getboolean('tikzpicture'):
         expr = re.compile(r"\\(begin|end){pgfpicture}")
         repl = r"\\\1{tikzpicture}"
         pp_funcs.append(lambda s: re.sub(expr, repl, s))
@@ -652,7 +679,7 @@ def save(figure=None):
         outfile.write(infile.readline())
         outfile.write(infile.readline())
         line = infile.readline()
-        if _config['postprocessing']['tikzpicture']:
+        if _config['postprocessing'].getboolean('tikzpicture'):
             outfile.write("%%   \\usepackage{tikz}\n")
         else:
             outfile.write(line)
@@ -660,7 +687,7 @@ def save(figure=None):
 
         # If we've updated the raster image directory, we can delete the
         # instructions about getting them to appear.
-        if _config['postprocessing']['fix_raster_dir']:
+        if _config['postprocessing'].getboolean('fix_raster_paths'):
             for n in range(7):
                 _ = infile.readline()
 
@@ -669,9 +696,9 @@ def save(figure=None):
             for n in range(7):
                 outfile.write(infile.readline())
 
-        # Avoid postprocessing the rest of the header (which includes the
-        # preamble which was used). The first non-header line is \begingroup
-        # which we don't want to change anyway.
+        # Ignore the rest of the header (which includes the preamble which was
+        # used). The first non-header line is \begingroup which we don't want
+        # to change anyway.
         line = infile.readline()
         while line[0] == '%':
             outfile.write(line)
