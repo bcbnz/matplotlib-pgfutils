@@ -356,7 +356,7 @@ def _file_tracker(to_wrap):
         # being saved as PNGs. Confirm this by checking the filename against
         # the pattern that the PGF backend uses.
         elif file.mode == 'wb':
-            if re.match("^.+-img\d+.png$", file.name):
+            if re.match(r"^.+-img\d+.png$", file.name):
                 _file_tracker.filenames.add(("w", file.name))
 
         # Done.
