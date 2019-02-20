@@ -165,7 +165,8 @@ class PgfutilsParser(configparser.ConfigParser):
         # Pull out the pieces.
         groups = m.groupdict()
         size = float(groups['size'])
-        unit = groups.get('unit', '').lower()
+        unit = groups.get('unit', '') or ''
+        unit = unit.lower()
 
         # No unit: already in inches.
         if not unit:
