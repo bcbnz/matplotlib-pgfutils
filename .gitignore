@@ -38,3 +38,13 @@ MANIFEST
 *~
 \#*\#
 .\#*
+
+# TeX generated files.
+*.aux
+*.log
+*.dvi
+*.pdf
+
+# Latexmk databases.
+*.fdb_latexmk
+*.fls
