@@ -3,9 +3,12 @@ Configuration
 
 Primary configuration is done through a configuration file. This should be
 named `pgfutils.cfg` and placed in the top-level directory, i.e., where you run
-the scripts from. The configuration file is processed by the [configparser][1]
-module which uses a file structure similar to that of a Windows INI file.
-Four sections can be present:
+the scripts from. An example configuration file containing the default settings
+is [available in the extras/ directory](../extras/pgfutils.cfg) of the project.
+
+The configuration file is processed by the [configparser][1] module which uses
+a file structure similar to that of a Windows INI file.  Four sections can be
+present:
 
 * `tex`: contains details of the TeX setup you are plotting for.
 * `pgfutils`: configuration options for the pgfutils module itself.
