@@ -67,7 +67,7 @@ Documentation is available in Markdown format in the doc/ directory:
 * [Latexmk integration](doc/latexmk.md)
 
 An example configuration file showing the default settings is given in
-[pgfutils.cfg](pgfutils.cfg).
+[extras/pgfutils.cfg](extras/pgfutils.cfg).
 
 
 Unit testing
