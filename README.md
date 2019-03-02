@@ -70,6 +70,16 @@ An example configuration file showing the default settings is given in
 [pgfutils.cfg](pgfutils.cfg).
 
 
+Unit testing
+------------
+
+Some basic unit tests are currently included in the tests/ directory of the
+source. These are designed to be run with the [pytest][3] framework; from the
+top-level directory run `pytest` (or `pytest -v`) to execute the tests.
+
+[3]: https://pytest.org/
+
+
 License
 -------
 
