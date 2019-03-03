@@ -32,8 +32,8 @@ Dimensions can be given with a variety of units:
 
 If no unit is given, `inches` is assumed as this is the unit Matplotlib uses.
 Colors can be given as named strings, `(r, g, b)` or `(r, g, b, a)` tuples, a
-single number for greyscale fractions, or `none` or empty for transparent. All
-numbers must be between 0 and 1.
+single number for greyscale fractions, or `none`, `transparent` or empty for
+transparent. All numbers must be between 0 and 1.
 
 
 TeX settings

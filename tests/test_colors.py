@@ -55,6 +55,8 @@ class TestColorClass:
         _config_reset()
         _config.read_kwargs(axes_background='none')
         assert _config['pgfutils'].getcolor('axes_background') == 'none'
+        _config.read_kwargs(axes_background='transparent')
+        assert _config['pgfutils'].getcolor('axes_background') == 'none'
         _config.read_kwargs(axes_background='')
         assert _config['pgfutils'].getcolor('axes_background') == 'none'
 

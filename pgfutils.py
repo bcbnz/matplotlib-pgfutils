@@ -192,7 +192,7 @@ class PgfutilsParser(configparser.ConfigParser):
             * Tuples (r, g, b) or (r, g, b, a) with floating-point entries in
               [0, 1]
             * A floating-point value in [0, 1] for grayscale
-            * 'none' or an empty value for transparent.
+            * 'none', 'transparent', or an empty value for transparent.
  
         Parameters
         ----------
@@ -215,7 +215,7 @@ class PgfutilsParser(configparser.ConfigParser):
         value = self.get(section, option, **kwargs).strip() or 'none'
 
         # Transparent.
-        if value == 'none':
+        if value in {'none', 'transparent'}:
             return 'none'
 
         # Single floating point number: grayscale.
