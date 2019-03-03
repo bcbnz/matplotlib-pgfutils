@@ -13,10 +13,11 @@ interpreted as a filename, and the list written to that file.
 The tracked files are output in the format `mode:filename`, where mode is `r`
 for files that were read (dependencies) and `w` for files that were written
 (generated files). Only files in or below the current directory will be
-included in the list. Note that the read files will include the `pgfutils.cfg`
-file if it exists, and that the written files will *not* include the final PGF
-figure (typically, the only written files that are reported are any rasterised
-images that are included in the figure).
+included in the list, and all filenames are relative to the current directory.
+Note that the read files will include the `pgfutils.cfg` file if it exists, and
+that the written files will *not* include the final PGF figure (typically, the
+only written files that are reported are any rasterised images that are
+included in the figure).
 
 Internally, this feature works by wrapping some standard Python file opening
 functions (such as `open()`) and keeping a list of any relevant filenames.

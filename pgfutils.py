@@ -382,19 +382,20 @@ def _file_tracker(to_wrap):
             return file
 
         # Everything we are interested in is within the project tree.
-        if os.path.relpath(file.name).startswith('.'):
+        relname = os.path.relpath(file.name)
+        if relname.startswith('.'):
             return file
 
         # Assume files that are read are dependencies.
         if 'r' in file.mode:
-            _file_tracker.filenames.add(("r", file.name))
+            _file_tracker.filenames.add(("r", relname))
 
         # Binary files being written could be rasterised parts of the image
         # being saved as PNGs. Confirm this by checking the filename against
         # the pattern that the PGF backend uses.
         elif file.mode == 'wb':
-            if re.match(r"^.+-img\d+.png$", file.name):
-                _file_tracker.filenames.add(("w", file.name))
+            if re.match(r"^.+-img\d+.png$", relname):
+                _file_tracker.filenames.add(("w", relname))
 
         # Done.
         return file
