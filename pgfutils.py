@@ -126,6 +126,59 @@ class PgfutilsParser(configparser.ConfigParser):
         return self.read_dict(d)
 
 
+    def parsedimension(self, dim):
+        """Convert a dimension to inches.
+
+        The dimension should be in the format '<value><unit>', where the unit
+        can be 'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is
+        assumed to be in inches. Note that points refer to TeX points (72.27
+        per inch) rather than Postscript points (72 per inch).
+
+        Parameters
+        ----------
+        dim: string
+            The dimension to parse.
+
+        Returns
+        -------
+        float: The dimension in inches.
+
+        Raises
+        ------
+        DimensionError:
+            The dimension is empty or not recognised.
+
+        """
+        # Check for an empty string.
+        if not dim:
+            raise DimensionError("Cannot be set to an empty value.")
+
+        # Try to parse it.
+        m = self._dimre.match(dim)
+        if not m:
+            raise DimensionError("Could not parse {} as a dimension.".format(dim))
+
+        # Pull out the pieces.
+        groups = m.groupdict()
+        size = float(groups['size'])
+        unit = groups.get('unit', '') or ''
+        unit = unit.lower()
+
+        # No unit: already in inches.
+        if not unit:
+            return size
+
+        # Pick out the divisor to convert into inches.
+        factor = self._dimconv.get(unit, None)
+
+        # Unknown unit.
+        if factor is None:
+            raise DimensionError("Unknown unit {}.".format(unit))
+
+        # Do the conversion.
+        return size / factor
+
+
     def getdimension(self, section, option, **kwargs):
         """Return a configuration entry as a dimension in inches.
 
@@ -152,35 +205,13 @@ class PgfutilsParser(configparser.ConfigParser):
         # Get the string version of the dimension.
         dim = self.get(section, option, **kwargs).strip().lower()
 
-        # Check for an empty string.
-        if not dim:
-            msg = "Dimension {}.{} cannot be set to an empty value.".format(section, option)
-            raise DimensionError(msg)
-
-        # Try to parse it.
-        m = self._dimre.match(dim)
-        if not m:
-            raise DimensionError("{}.{}: could not parse {} as a dimension.".format(section, option, dim))
-
-        # Pull out the pieces.
-        groups = m.groupdict()
-        size = float(groups['size'])
-        unit = groups.get('unit', '') or ''
-        unit = unit.lower()
-
-        # No unit: already in inches.
-        if not unit:
-            return size
-
-        # Pick out the divisor to convert into inches.
-        factor = self._dimconv.get(unit, None)
-
-        # Unknown unit.
-        if factor is None:
-            raise DimensionError("{}.{}: unknown unit {}.".format(section, option, unit))
-
-        # Do the conversion.
-        return size / factor
+        # And parse it; modify any parsing exception to include
+        # the section and option we were parsing.
+        try:
+            return self.parsedimension(dim)
+        except DimensionError as e:
+            msg = "{}.{}: {}".format(section, option, str(e))
+            raise DimensionError(msg) from None
 
 
     def getcolor(self, section, option, **kwargs):
@@ -517,15 +548,24 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     matplotlib.rcParams['savefig.facecolor'] = _config['pgfutils'].getcolor('figure_background')
     matplotlib.rcParams['axes.facecolor'] = _config['pgfutils'].getcolor('axes_background')
 
+    # Figure out the figure width. If it is a float, it is a fraction of
+    # textwidth.  Otherwise, assume it's an explicit dimension.
+    try:
+        w = float(width)
+    except ValueError:
+        w = _config.parsedimension(width)
+    else:
+        w *= _config['tex'].getdimension('text_width')
+
+    # And repeat for the figure height.
+    try:
+        h = float(height)
+    except ValueError:
+        h = _config.parsedimension(height)
+    else:
+        h *= _config['tex'].getdimension('text_height')
+
     # Set the figure size.
-    try:
-        w = width * _config['tex'].getdimension('text_width')
-    except TypeError:
-        w = _parse_dimension(width)
-    try:
-        h = height * _config['tex'].getdimension('text_height')
-    except TypeError:
-        h = _parse_dimension(height)
     matplotlib.rcParams['figure.figsize'] = [w, h]
 
     # Ask for a tight layout (i.e., minimal padding).
