@@ -149,7 +149,12 @@ class PgfutilsParser(configparser.ConfigParser):
             The dimension is empty or not recognised.
 
         """
+        # Need a string.
+        if dim is None:
+            raise DimensionError("Cannot be set to an empty value.")
+
         # Check for an empty string.
+        dim = dim.strip().lower()
         if not dim:
             raise DimensionError("Cannot be set to an empty value.")
 
@@ -203,7 +208,7 @@ class PgfutilsParser(configparser.ConfigParser):
 
         """
         # Get the string version of the dimension.
-        dim = self.get(section, option, **kwargs).strip().lower()
+        dim = self.get(section, option, **kwargs)
 
         # And parse it; modify any parsing exception to include
         # the section and option we were parsing.

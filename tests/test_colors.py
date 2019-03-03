@@ -131,3 +131,17 @@ class TestColorClass:
             with pytest.raises(ColorError):
                 _config.read_kwargs(axes_background=value)
                 _config['pgfutils'].getcolor('axes_background')
+
+
+    def test_invalid_tuples(self):
+        """Check RGB/RGBA parsing rejects tuples of invalid length..."""
+        _config_reset()
+        with pytest.raises(ColorError):
+            _config.read_kwargs(axes_background='(1,)')
+            _config['pgfutils'].getcolor('axes_background')
+        with pytest.raises(ColorError):
+            _config.read_kwargs(axes_background='(1,1)')
+            _config['pgfutils'].getcolor('axes_background')
+        with pytest.raises(ColorError):
+            _config.read_kwargs(axes_background='(1,1,1,1,1)')
+            _config['pgfutils'].getcolor('axes_background')
