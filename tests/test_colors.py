@@ -38,3 +38,94 @@ class TestColorClass:
         with pytest.raises(ColorError):
             _config.read_kwargs(axes_background='nonexistentuglycolor')
             _config['pgfutils'].getcolor('axes_background')
+
+
+    def test_cycle(self):
+        """Color cycle parsing..."""
+        _config_reset()
+
+        for i in range(0, 10):
+            cycle = "C{0:d}".format(i)
+            _config.read_kwargs(axes_background=cycle)
+            assert _config['pgfutils'].getcolor('axes_background') == cycle
+
+
+    def test_transparent(self):
+        """Color parsing supports transparency..."""
+        _config_reset()
+        _config.read_kwargs(axes_background='none')
+        assert _config['pgfutils'].getcolor('axes_background') == 'none'
+        _config.read_kwargs(axes_background='')
+        assert _config['pgfutils'].getcolor('axes_background') == 'none'
+
+
+    def test_rgb(self):
+        """RGB list/tuple color parsing..."""
+        _config_reset()
+
+        # Generate a set of valid colors. We have to include an alpha channel
+        # here as it is always returned from the parser with alpha=1.
+        import numpy as np
+        c = np.linspace(0, 1, 5)
+        a = (c * 0) + 1.0
+        colors = np.stack(np.meshgrid(c, c, c, a), -1).reshape(-1, 4)
+
+        # Check they are accepted. The parser always returns colors as tuples.
+        for color in colors:
+            l = list(color)
+            t = tuple(color)
+            _config.read_kwargs(figure_background=str(l[:-1]))
+            assert _config['pgfutils'].getcolor('figure_background') == t
+            _config.read_kwargs(axes_background=str(t[:-1]))
+            assert _config['pgfutils'].getcolor('axes_background') == t
+
+        # Check it fails on channels with invalid values.
+        color = [0, 0, 0]
+        for channel in range(3):
+            for value in (-0.1, 1.2, 'a', True, False, None):
+                with pytest.raises(ColorError):
+                    color[channel] = value
+                    _config.read_kwargs(axes_background=color)
+                    _config['pgfutils'].getcolor('axes_background')
+            color[channel] = 0
+
+        # And some invalid formats too.
+        for value in ('1,1,1', 'fail', 'yes', 'no'):
+            with pytest.raises(ColorError):
+                _config.read_kwargs(axes_background=value)
+                _config['pgfutils'].getcolor('axes_background')
+
+
+    def test_rgba(self):
+        """RGBA list/tuple color parsing..."""
+        _config_reset()
+
+        # Generate a set of valid colors.
+        import numpy as np
+        c = np.linspace(0, 1, 5)
+        colors = np.stack(np.meshgrid(c, c, c, c), -1).reshape(-1, 4)
+
+        # Check they are accepted. The parser always returns colors as tuples.
+        for color in colors:
+            l = list(color)
+            t = tuple(color)
+            _config.read_kwargs(figure_background=str(l))
+            assert _config['pgfutils'].getcolor('figure_background') == t
+            _config.read_kwargs(axes_background=str(t))
+            assert _config['pgfutils'].getcolor('axes_background') == t
+
+        # Check it fails on channels with invalid values.
+        color = [0, 0, 0, 0]
+        for channel in range(4):
+            for value in (-0.1, 1.2, 'a', True, False, None):
+                with pytest.raises(ColorError):
+                    color[channel] = value
+                    _config.read_kwargs(axes_background=color)
+                    _config['pgfutils'].getcolor('axes_background')
+            color[channel] = 0
+
+        # And some invalid formats too.
+        for value in ('1,1,1', 'fail', 'yes', 'no'):
+            with pytest.raises(ColorError):
+                _config.read_kwargs(axes_background=value)
+                _config['pgfutils'].getcolor('axes_background')
