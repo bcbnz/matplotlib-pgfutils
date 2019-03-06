@@ -698,7 +698,7 @@ def save(figure=None):
         if not os.path.samefile(figdir, os.curdir):
             prefix = os.path.relpath(figdir)
             expr = re.compile(r"(\\pgfimage(?:\[.+?\])?{)(.+?)}")
-            repl = r"\1{0:s}/\2".format(prefix)
+            repl = r"\1{0:s}/\2}}".format(prefix)
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Use the tikzpicture environment rather than pgfpicture.
