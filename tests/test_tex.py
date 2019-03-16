@@ -39,6 +39,18 @@ class TestTexClass:
     def test_fix_raster_paths(self):
         """Check fix_raster_paths works..."""
         res = self.run_script("fix_raster_paths", "figures/noise.py")
-        assert res.returncode == 0
+        assert res.returncode == 0, "Building tests/tex/fix_raster_paths/figures/noise.pypgf failed."
+        res = self.run_script("fix_raster_paths", "speckle.py")
+        assert res.returncode == 0, "Building tests/tex/fix_raster_paths/speckle.pypgf failed."
         res = self.run_tex("fix_raster_paths", "document")
-        assert res.returncode == 0
+        assert res.returncode == 0, "Building tests/tex/fix_raster_paths/document.pdf failed."
+
+
+    def test_tikzpicture(self):
+        """Check tikzpicture postprocessing works..."""
+        res = self.run_script("tikzpicture", "square.py")
+        assert res.returncode == 0, "Building tests/tex/tikzpicture/square.pypgf failed."
+        res = self.run_tex("tikzpicture", "document_pgf")
+        assert res.returncode != 0, "Document should have failed to built without the tikz package."
+        res = self.run_tex("tikzpicture", "document_tikz")
+        assert res.returncode == 0, "Document failed to build with the tikz package."
