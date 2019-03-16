@@ -500,7 +500,7 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     except NameError:
         pass
     else:
-        if ipython.active_eventloop is not None:
+        if ipython.active_eventloop is not None:            # pragma: no cover
             _interactive = True
 
     # We're now ready to start configuring Matplotlib.
@@ -508,7 +508,7 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
 
     # Set the backend. We don't want to overwrite the current backend if this
     # is an interactive run as the PGF backend does not implement a GUI.
-    if not _interactive:
+    if not _interactive:                              # pragma: no cover
         matplotlib.use('pgf')
 
     # Specify which TeX engine we are using.
@@ -648,7 +648,7 @@ def save(figure=None):
             cb.solids.set_edgecolor('face')
 
     # Interactive mode: show the figure rather than saving.
-    if _interactive:
+    if _interactive:                     # pragma: no cover
         plt.show()
         return
 
