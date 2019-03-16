@@ -2,6 +2,7 @@ import os
 import os.path
 import subprocess
 import sys
+import tempfile
 
 
 class TestTrackingClass:
@@ -248,3 +249,54 @@ class TestTrackingClass:
         assert actual == expected
 
         self.cleanup()
+
+
+    def test_ignore_non_image_binary(self):
+        """File tracking ignores non-image binary written files..."""
+        # Run the script.
+        res = self.run_script('simple_binary_nonimage.py', 1)
+        assert res.returncode == 0, "Running tests/tracking_scripts/simple_binary_nonimage.py failed."
+        assert os.path.exists("tests/tracking_scripts/test.npy"), "Test output not written."
+        assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
+        self.cleanup()
+        os.unlink("tests/tracking_scripts/test.npy")
+
+
+    def test_ignore_non_binary(self):
+        """File tracking ignores non-binary written files..."""
+        # Run the script.
+        res = self.run_script('simple_nonbinary.py', 1)
+        assert res.returncode == 0, "Running tests/tracking_scripts/simple_nonbinary.py failed."
+        assert os.path.exists("tests/tracking_scripts/test.txt"), "Test output not written."
+        assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
+        self.cleanup()
+        os.unlink("tests/tracking_scripts/test.txt")
+
+
+    def test_nonfile_opener(self):
+        """File tracking ignores openers that don't return file objects..."""
+        res = self.run_script('simple_nonfile.py', 1)
+        assert res.returncode == 0, "Running tests/tracking_scripts/simple_nonfile.py failed."
+        assert os.path.exists("tests/tracking_scripts/test_nonfile.png"), "Test output not written."
+        assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
+        self.cleanup()
+
+
+    def test_fdopen(self):
+        """File tracking ignores file objects from os.fdopen..."""
+        res = self.run_script('simple_fdopen.py', 1)
+        assert res.returncode == 0, "Running tests/tracking_scripts/simple_fdopen.py failed."
+        assert os.path.exists("tests/tracking_scripts/test_fdopen.png"), "Test output not written."
+        assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
+        self.cleanup()
+
+
+    def test_nonproject(self):
+        """File tracking ignores files written outside top-level directory..."""
+        res = self.run_script('simple_nonproject.py', 1)
+        assert res.returncode == 0, "Running tests/tracking_scripts/simple_nonproject.py failed."
+        tfn = os.path.join(tempfile.gettempdir(), "test_nonproject.png")
+        assert os.path.exists(tfn), "Test output not written."
+        assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
+        self.cleanup()
+        os.unlink(tfn)
