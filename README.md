@@ -73,11 +73,16 @@ An example configuration file showing the default settings is given in
 Unit testing
 ------------
 
-Some basic unit tests are currently included in the tests/ directory of the
-source. These are designed to be run with the [pytest][3] framework; from the
-top-level directory run `pytest` (or `pytest -v`) to execute the tests.
+Unit tests are included in the tests/ directory of the source. These are
+designed to be run with the [pytest][3] framework and employ the
+[Coverage.py][4] package via the [pytest-cov][5] plugin to measure test
+coverage. From the top-level directory run `pytest` to execute the tests. A
+basic test coverage report will be printed on the terminal, and the full report
+can be viewed by opening the `htmlcov/index.html` file in your web browser.
 
 [3]: https://pytest.org/
+[4]: https://coverage.readthedocs.io/
+[5]: https://pytest-cov.readthedocs.io/
 
 
 License

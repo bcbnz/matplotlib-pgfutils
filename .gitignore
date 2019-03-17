@@ -48,3 +48,7 @@ MANIFEST
 # Latexmk databases.
 *.fdb_latexmk
 *.fls
+
+# Pytest coverage files.
+.coverage
+htmlcov/
