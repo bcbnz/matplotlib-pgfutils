@@ -89,6 +89,7 @@ font_size = 10
 legend_font_size = 10
 line_width = 1
 axes_line_width = 0.6
+legend_line_width = 0.6
 figure_background = 
 axes_background = white
 preamble=
@@ -110,7 +111,8 @@ the size of the text in any legends in the figure.
 
 The width of the lines used to plot data is set by `line_width`. The
 `axes_line_width` property controls the width of the line used to draw the
-axes.
+axes. And, as you might have guessed, `legend_line_width` sets the width of the
+line around any legends in the figure.
 
 
 ### Background colours

@@ -326,6 +326,9 @@ def _config_reset():
            'legend_font_size': '10',
            'line_width': '1',
            'axes_line_width': '0.6',
+           'legend_border_width': '0.6',
+           'legend_border_color': '(0.8, 0.8, 0.8, 0.8)',
+           'legend_background': '(1, 1, 1, 0.8)',
            'figure_background': '',
            'axes_background': 'white',
        },
@@ -608,11 +611,14 @@ def save(figure=None):
 
     # Go through and fix up a few little quirks on the axes within this figure.
     for axes in figure.get_axes():
-        # There is no rcParam setting for the line width of a border around a
-        # legend. Manually set this to the axes line width.
+        # There are no rcParams for the legend properties. Go through and set
+        # these directly before we save.
         legend = axes.get_legend()
         if legend:
-            legend.get_frame().set_linewidth(matplotlib.rcParams['axes.linewidth'])
+            frame = legend.get_frame()
+            frame.set_linewidth(_config['pgfutils'].getfloat('legend_border_width'))
+            frame.set_ec(_config['pgfutils'].getcolor('legend_border_color'))
+            frame.set_fc(_config['pgfutils'].getcolor('legend_background'))
 
         # Some PDF viewers show white lines through vector colorbars. This is a
         # bug in the viewers, but can be worked around by forcing the edge of
