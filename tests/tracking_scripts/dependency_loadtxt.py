@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os.path
 
-data = np.loadtxt('tests/tracking_scripts/scatter.csv', delimiter=',', dtype=np.int)
+data = np.loadtxt('scatter.csv', delimiter=',', dtype=np.int)
 
 x = data[:, :3]
 y = data[:, 3:]

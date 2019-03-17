@@ -13,7 +13,7 @@ s = np.sin(2 * np.pi * 0.5 * t)
 # You shouldn't need to do this in a normal script!
 os.open = _file_tracker(os.open)
 
-fd = os.open("tests/tracking_scripts/test_nonfile.png", os.O_WRONLY | os.O_CREAT)
+fd = os.open("test_nonfile.png", os.O_WRONLY | os.O_CREAT)
 img = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=="
 os.write(fd, base64.b64decode(img))
 os.close(fd)

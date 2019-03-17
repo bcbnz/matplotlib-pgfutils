@@ -9,7 +9,7 @@ s = np.sin(2 * np.pi * 0.5 * t)
 
 data = np.random.randn(100, 100)
 
-with open("tests/tracking_scripts/test.npy", 'wb') as f:
+with open("test.npy", 'wb') as f:
     np.save(f, data)
 
 plt.plot(t, s)

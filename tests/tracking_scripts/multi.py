@@ -5,11 +5,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os.path
 
-noise = np.load('tests/tracking_scripts/noise.npy')
+noise = np.load('noise.npy')
 plt.imshow(noise)
 plt.colorbar()
 
-data = np.loadtxt('tests/tracking_scripts/scatter.csv', delimiter=',', dtype=np.int)
+data = np.loadtxt('scatter.csv', delimiter=',', dtype=np.int)
 
 x = data[:, :3]
 y = data[:, 3:]

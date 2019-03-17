@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 t = np.linspace(0, 10, 201)
 s = np.sin(2 * np.pi * 0.5 * t)
 
-with open("tests/tracking_scripts/test.txt", 'w') as f:
+with open("test.txt", 'w') as f:
     f.write("Hello world")
 
 plt.plot(t, s)
