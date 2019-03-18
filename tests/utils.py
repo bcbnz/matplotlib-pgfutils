@@ -77,3 +77,21 @@ def build_tex(working_dir, basename, tex='xelatex'):
 
     # And we're done.
     return res
+
+
+def clean_dir(dir):
+    """Remove files built as part of a test from a directory.
+
+    Parameters
+    ----------
+    dir : string
+        The path to the directory to clean.
+
+    """
+    for root, dirs, files in os.walk(dir):
+        for fn in files:
+            base, ext = os.path.splitext(fn)
+            if ext in {'.pypgf', '.png', '.aux', '.log', '.pdf'}:
+                os.unlink(os.path.join(root, fn))
+            if fn == 'tracking.test.results':
+                os.unlink(os.path.join(root, fn))
