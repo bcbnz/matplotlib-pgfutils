@@ -3,7 +3,7 @@ import os.path
 from .utils import build_figure, build_tex
 import tempfile
 
-dirname = os.path.join(os.path.normpath(os.path.dirname(__file__)), "tracking_scripts")
+dirname = os.path.join(os.path.normpath(os.path.dirname(__file__)), "sources/tracking")
 
 
 class TestTrackingClass:
@@ -232,29 +232,29 @@ class TestTrackingClass:
         """File tracking ignores non-image binary written files..."""
         # Run the script.
         res = build_figure(dirname, 'simple_binary_nonimage.py', {'PGFUTILS_TRACK_FILES': '1'})
-        assert res.returncode == 0, "Running tests/tracking_scripts/simple_binary_nonimage.py failed."
-        assert os.path.exists("tests/tracking_scripts/test.npy"), "Test output not written."
+        assert res.returncode == 0, "Running tests/sources/tracking/simple_binary_nonimage.py failed."
+        assert os.path.exists("tests/sources/tracking/test.npy"), "Test output not written."
         assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
         self.cleanup()
-        os.unlink("tests/tracking_scripts/test.npy")
+        os.unlink("tests/sources/tracking/test.npy")
 
 
     def test_ignore_non_binary(self):
         """File tracking ignores non-binary written files..."""
         # Run the script.
         res = build_figure(dirname, 'simple_nonbinary.py', {'PGFUTILS_TRACK_FILES': '1'})
-        assert res.returncode == 0, "Running tests/tracking_scripts/simple_nonbinary.py failed."
-        assert os.path.exists("tests/tracking_scripts/test.txt"), "Test output not written."
+        assert res.returncode == 0, "Running tests/sources/tracking/simple_nonbinary.py failed."
+        assert os.path.exists("tests/sources/tracking/test.txt"), "Test output not written."
         assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
         self.cleanup()
-        os.unlink("tests/tracking_scripts/test.txt")
+        os.unlink("tests/sources/tracking/test.txt")
 
 
     def test_nonfile_opener(self):
         """File tracking ignores openers that don't return file objects..."""
         res = build_figure(dirname, 'simple_nonfile.py', {'PGFUTILS_TRACK_FILES': '1'})
-        assert res.returncode == 0, "Running tests/tracking_scripts/simple_nonfile.py failed."
-        assert os.path.exists("tests/tracking_scripts/test_nonfile.png"), "Test output not written."
+        assert res.returncode == 0, "Running tests/sources/tracking/simple_nonfile.py failed."
+        assert os.path.exists("tests/sources/tracking/test_nonfile.png"), "Test output not written."
         assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
         self.cleanup()
 
@@ -262,8 +262,8 @@ class TestTrackingClass:
     def test_fdopen(self):
         """File tracking ignores file objects from os.fdopen..."""
         res = build_figure(dirname, 'simple_fdopen.py', {'PGFUTILS_TRACK_FILES': '1'})
-        assert res.returncode == 0, "Running tests/tracking_scripts/simple_fdopen.py failed."
-        assert os.path.exists("tests/tracking_scripts/test_fdopen.png"), "Test output not written."
+        assert res.returncode == 0, "Running tests/sources/tracking/simple_fdopen.py failed."
+        assert os.path.exists("tests/sources/tracking/test_fdopen.png"), "Test output not written."
         assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
         self.cleanup()
 
@@ -271,7 +271,7 @@ class TestTrackingClass:
     def test_nonproject(self):
         """File tracking ignores files written outside top-level directory..."""
         res = build_figure(dirname, 'simple_nonproject.py', {'PGFUTILS_TRACK_FILES': '1'})
-        assert res.returncode == 0, "Running tests/tracking_scripts/simple_nonproject.py failed."
+        assert res.returncode == 0, "Running tests/sources/tracking/simple_nonproject.py failed."
         tfn = os.path.join(tempfile.gettempdir(), "test_nonproject.png")
         assert os.path.exists(tfn), "Test output not written."
         assert len(res.stdout.strip()) == 0, "Tracking output was not empty."

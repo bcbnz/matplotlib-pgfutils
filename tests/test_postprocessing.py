@@ -7,7 +7,7 @@ base = os.path.normpath(os.path.dirname(__file__))
 class TestTexClass:
     def test_fix_raster_paths(self):
         """Check fix_raster_paths works..."""
-        dir = os.path.join(base, "tex", "fix_raster_paths")
+        dir = os.path.join(base, "sources", "fix_raster_paths")
         res = build_figure(dir, "figures/noise.py")
         assert res.returncode == 0, "Building tests/tex/fix_raster_paths/figures/noise.pypgf failed."
         res = build_figure(dir, "speckle.py")
@@ -19,7 +19,7 @@ class TestTexClass:
 
     def test_tracking_fix_raster_paths(self):
         """Check file tracking works with fix_raster_paths..."""
-        dir = os.path.join(base, "tex", "fix_raster_paths")
+        dir = os.path.join(base, "sources", "fix_raster_paths")
         res = build_figure(dir, "figures/noise.py", {"PGFUTILS_TRACK_FILES": "1"})
         assert res.returncode == 0, "Building tests/tex/fix_raster_paths/figures/noise.pypgf failed."
         expected = {
@@ -44,7 +44,7 @@ class TestTexClass:
 
     def test_tikzpicture(self):
         """Check tikzpicture postprocessing works..."""
-        dir = os.path.join(base, "tex", "tikzpicture")
+        dir = os.path.join(base, "sources", "tikzpicture")
         res = build_figure(dir, "square.py")
         assert res.returncode == 0, "Building tests/tex/tikzpicture/square.pypgf failed."
         res = build_tex(dir, "document_pgf")
