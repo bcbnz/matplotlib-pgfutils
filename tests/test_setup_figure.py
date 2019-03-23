@@ -1,7 +1,12 @@
 from pgfutils import setup_figure, _config, _config_reset
 import matplotlib
 import numpy as np
-from pytest import approx
+import os.path
+from pytest import approx, raises
+from .utils import build_figure, clean_dir
+
+base = os.path.normpath(os.path.dirname(__file__))
+
 
 class TestSetupFigureClass:
     def test_setup_both_fractions(self):
@@ -117,3 +122,39 @@ class TestSetupFigureClass:
                 w, h = matplotlib.rcParams['figure.figsize']
                 assert w == approx(winch, rel=1e-3)
                 assert h == approx(n * _config['tex'].getdimension('text_height'))
+
+
+    def test_kwargs_overrides(self):
+        """Test setup_figure() kwargs override configuration file..."""
+        dir = os.path.join(base, "sources", "kwargs")
+
+        # Helper to parse a fill color from a pypgf file.
+        def get_fill_color(fn):
+            with open(fn, 'r') as f:
+                for line in f:
+                    if 'currentfill' not in line:
+                        continue
+                    line = line.replace(r'\definecolor{currentfill}{rgb}{', '')
+                    line = line.replace(r'}%', '')
+                    return tuple(map(float, line.split(',')))
+
+        # Check the default (pgfutils.cfg) fill color is in use.
+        res = build_figure(dir, 'default.py')
+        assert res.returncode == 0, "Failed to run test/sources/kwargs/default.py."
+        assert get_fill_color('tests/sources/kwargs/default.pypgf') == approx((0, 0, 1)), \
+            "Default background fill should be blue, (0, 0, 1)."
+
+        # And now check we can override this using kwargs.
+        res = build_figure(dir, 'overridden.py')
+        assert res.returncode == 0, "Failed to run test/sources/kwargs/overridden.py."
+        assert get_fill_color('tests/sources/kwargs/overridden.pypgf') == approx((1, 0, 0)), \
+            "Overridden background fill should be red, (1, 0, 0)."
+
+        # Done.
+        clean_dir(dir)
+
+
+    def test_kwargs_rejects_unknown(self):
+        """Test setup_figure() rejects unknown configuration options..."""
+        with raises(KeyError):
+            setup_figure(width=1, height=1, border_width=3)
