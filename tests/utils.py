@@ -34,8 +34,13 @@ def build_figure(working_dir, filename, environment=None):
     os.chdir(working_dir)
 
     # Run the script.
-    res = subprocess.run([sys.executable, filename], text=True, env=env,
+    res = subprocess.run([sys.executable, filename], text=True,
+                         universal_newlines=True, env=env,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    sys.stdout.write(res.stdout)
+    sys.stdout.flush()
+    sys.stderr.write(res.stderr)
+    sys.stderr.flush()
 
     # Move back into the original directory.
     os.chdir(cwd)
@@ -69,8 +74,12 @@ def build_tex(working_dir, basename, tex='xelatex'):
     os.chdir(working_dir)
 
     # Run TeX.
-    res = subprocess.run([tex, basename], text=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    res = subprocess.run([tex, basename], text=True, universal_newlines=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    sys.stdout.write(res.stdout)
+    sys.stdout.flush()
+    sys.stderr.write(res.stderr)
+    sys.stderr.flush()
 
     # Move back into the original directory.
     os.chdir(cwd)
