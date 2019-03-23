@@ -60,7 +60,7 @@ class TestTexClass:
         """Check legend parameters are set..."""
         # Build the image.
         dir = os.path.join(base, "sources", "legend")
-        res = build_figure(dir, "legend_only.py", {"PGFUTILS_TRACK_FILES": "1"})
+        res = build_figure(dir, "legend_only.py")
         assert res.returncode == 0, "Building tests/sources/legend/legend_only.pypgf failed."
 
         # Go through and find some values of interest.
@@ -108,3 +108,6 @@ class TestTexClass:
         assert stroke == approx([1, 0.5, 0]), "Legend border colour is wrong."
         assert strokeopacity == approx(0.7), "Legend border opacity is wrong."
         assert linewidth == approx(4, abs=0.1), "Legend border width is wrong."
+
+        # Done.
+        clean_dir(dir)
