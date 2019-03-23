@@ -1,6 +1,9 @@
 from pgfutils import _config, _config_reset, DimensionError
+import os.path
 import pytest
 from pytest import approx
+
+base = os.path.dirname(__file__)
 
 
 class TestConfigClass:
@@ -11,6 +14,28 @@ class TestConfigClass:
         _config_reset()
         with pytest.raises(KeyError):
             _config.read_kwargs(unknown_keyword='yellow')
+
+
+    def test_cfg_unknown(self):
+        """Config parser rejects unknown options in config file..."""
+        _config_reset()
+        with pytest.raises(KeyError):
+            _config.read(os.path.join(base, 'sources', 'extra_options.cfg'))
+
+
+    def test_cfg_rcparams(self):
+        """Config parser allows rcParams in config file..."""
+        _config_reset()
+        _config.read(os.path.join(base, 'sources', 'extra_rcparams.cfg'))
+        assert not _config['rcParams'].getboolean('ytick.left'), "ytick.left is incorrect"
+        assert _config['rcParams'].getboolean('ytick.right'), "ytick.right is incorrect"
+
+
+    def test_cfg_unknown_rcparams(self):
+        """Config parser rejects unknown options in config file also containing rcParams..."""
+        _config_reset()
+        with pytest.raises(KeyError):
+            _config.read(os.path.join(base, 'sources', 'extra_options_rcparams.cfg'))
 
 
     def test_dim_unknown_unit(self):

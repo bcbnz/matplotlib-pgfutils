@@ -94,6 +94,39 @@ class PgfutilsParser(configparser.ConfigParser):
     }
 
 
+    def read(self, filename, encoding=None):
+        """Read configuration options from a file.
+
+        This is an extension of the standard ConfigParser.read() method to
+        reject unknown options. This provides an early indication to the user
+        that they have configured something incorrectly, rather than continuing
+        and having their plot generated differently to how they intended it.
+
+        """
+        def get_options():
+            options = set()
+            for sect, opts in self._sections.items():
+                if sect == 'rcParams':
+                    continue
+                options.update('{}.{}'.format(sect, opt) for opt in opts.keys())
+            return options
+
+        # Get the options before and after reading.
+        before = get_options()
+        result = super().read(filename, encoding)
+        after = get_options()
+
+        # If there's a difference, thats an error.
+        diff = after.difference(before)
+        if diff:
+            if len(diff) == 1:
+                raise KeyError("{}: unknown option {}".format(filename, diff.pop()))
+            raise KeyError("{}: unknown options {}".format(filename, ', '.join(diff)))
+
+        # Otherwise we're OK to continue.
+        return result
+
+
     def read_kwargs(self, **kwargs):
         """Read configuration options from keyword arguments.
 
