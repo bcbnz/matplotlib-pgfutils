@@ -327,8 +327,9 @@ def _config_reset():
            'line_width': '1',
            'axes_line_width': '0.6',
            'legend_border_width': '0.6',
-           'legend_border_color': '(0.8, 0.8, 0.8, 0.8)',
-           'legend_background': '(1, 1, 1, 0.8)',
+           'legend_border_color': '(0.8, 0.8, 0.8)',
+           'legend_background': '(1, 1, 1)',
+           'legend_opacity': 0.8,
            'figure_background': '',
            'axes_background': 'white',
        },
@@ -602,7 +603,6 @@ def save(figure=None):
     """
     global _config, _interactive
 
-    import matplotlib
     from matplotlib import pyplot as plt
 
     # Get the current figure if needed.
@@ -617,6 +617,7 @@ def save(figure=None):
         if legend:
             frame = legend.get_frame()
             frame.set_linewidth(_config['pgfutils'].getfloat('legend_border_width'))
+            frame.set_alpha(_config['pgfutils'].getfloat('legend_opacity'))
             frame.set_ec(_config['pgfutils'].getcolor('legend_border_color'))
             frame.set_fc(_config['pgfutils'].getcolor('legend_background'))
 

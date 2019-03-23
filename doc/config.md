@@ -95,6 +95,12 @@ axes_background = white
 preamble=
 ```
 
+### Background colours
+
+The general background of the figure (i.e., of the area outside of any axes in
+it) is set by the `figure_color` option. The background of the axes in the
+figure is set by `axes_color`.
+
 
 ### Font settings
 
@@ -111,15 +117,19 @@ the size of the text in any legends in the figure.
 
 The width of the lines used to plot data is set by `line_width`. The
 `axes_line_width` property controls the width of the line used to draw the
-axes. And, as you might have guessed, `legend_line_width` sets the width of the
-line around any legends in the figure.
+axes.
 
 
-### Background colours
+### Legends
 
-The general background of the figure (i.e., of the area outside of any axes in
-it) is set by the `figure_color` option. The background of the axes in the
-figure is set by `axes_color`.
+In addition to the font size (`legend_font_size` as mentioned above), the width
+and color of the border around the legend (`legend_border_width` and
+`legend_border_color` respectively) and the color of the background
+(`legend_background`) can be set. The opacity of both the border and the
+background is controlled by the `legend_opacity` setting, which should be a
+float between 0 (transparent) and 1 (solid). Note that, due to the way
+Matplotlib processes the legend, any opacities set in the border or background
+colors is overridden by this value.
 
 
 ### TeX preamble
