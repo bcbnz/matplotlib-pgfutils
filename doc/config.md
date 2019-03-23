@@ -154,6 +154,32 @@ preamble=
   \setmainfont{Noto Sans}
 ```
 
+Note that the `pgf` backend runs TeX in a temporary directory. Hence, any paths
+(for example, to a custom font) must be given as absolute paths. To simplify
+this configuration, pgfutils can perform path substitution in the preamble. If
+the `preamble_substitute` option is enabled, then any reference to `$basedir`
+or `${basedir}` in the preamble will be replaced by the absolute path to the
+base directory. This is the top-level directory the script is run from, i.e.,
+the one which contains the configuration file. For example:
+
+```INI
+[pgfutils]
+preamble_substitute = true
+preamble =
+  \usepackage{fontspec}
+  \setmainfont[
+    Path           = ${basedir}/fonts/,
+    Extension      = .ttf,
+    UprightFont    = *-Regular,
+    BoldFont       = *-Bold,
+    BoldItalicFont = *-BoldItalic
+  ]{MyCustomFontName}
+font_family = serif
+font_name = MyCustomFontName
+```
+
+Note that `preamble_substitute` is off by default, i.e., it must be explicitly
+enabled if you want to use it.
 
 
 Matplotlib rcParams
