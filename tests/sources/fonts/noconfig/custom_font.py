@@ -5,9 +5,8 @@ setup_figure(width=0.5, height=0.4, preamble_substitute=True,
 
 from matplotlib import pyplot as plt
 import numpy as np
-from scipy.special import j1
 
-x = np.linspace(-4, 4, 201)
-plt.plot(x, j1(x))
+t = np.linspace(-4, 4, 201)
+plt.plot(t, 2 * np.sin(2 * np.pi * 2.5 * t))
 
 save()
