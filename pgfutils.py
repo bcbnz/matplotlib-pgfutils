@@ -52,6 +52,7 @@ import inspect
 import os
 import os.path
 import re
+import string
 import sys
 
 
@@ -320,6 +321,7 @@ def _config_reset():
 
         'pgfutils': {
            'preamble': '',
+           'preamble_substitute': 'false',
            'font_family': 'serif',
            'font_name': '',
            'font_size': '10',
@@ -517,11 +519,27 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     if not _interactive:                              # pragma: no cover
         matplotlib.use('pgf')
 
+    # Workaround time. The validator used on the preamble splits the value by
+    # commas, and the subsequent usage of it joins it again with newlines. This
+    # breaks a preamble containing commas (e.g., in arguments to a package).
+    # This will be fixed in later releases with a proper _validate_tex_preamble
+    # function. For older versions, replacing the validator with a call to
+    # str.splitlines() fixes the problem.
+    # https://github.com/matplotlib/matplotlib/pull/12674
+    # https://github.com/matplotlib/matplotlib/pull/12805
+    try:
+        from matplotlib.rcsetup import _validate_tex_preamble
+    except ImportError:
+        matplotlib.rcParams.validate['pgf.preamble'] = str.splitlines
+
     # Specify which TeX engine we are using.
     matplotlib.rcParams['pgf.texsystem'] = _config['tex']['engine']
 
     # Custom TeX preamble.
-    matplotlib.rcParams['pgf.preamble'] = _config['pgfutils']['preamble']
+    preamble = _config['pgfutils']['preamble']
+    if _config['pgfutils'].getboolean('preamble_substitute'):
+        preamble = string.Template(preamble).substitute(basedir=os.path.abspath('.'))
+    matplotlib.rcParams['pgf.preamble'] = preamble
 
     # Clear the existing lists of specific font names.
     matplotlib.rcParams['font.sans-serif'] = []

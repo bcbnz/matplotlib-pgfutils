@@ -52,19 +52,11 @@ order to determine whether unnecessary whitespace is being introduced by
 Matplotlib or TeX.
 
 The preamble used for measuring label widths etc. can also be overridden on a
-per-figure basis using the `preamble` keyword argument. As with the
-configuration file, this can be given either as a string:
+per-figure basis using the `preamble` keyword argument:
 
 ```python
 from pgfutils import setup_figure, save
 setup_figure(width=0.5, height=0.4, preamble="\\usepackage{fontspec}\n\\setmainfont{Noto Sans}")
-```
-
-or as a list of lines:
-
-```python
-from pgfutils import setup_figure, save
-setup_figure(width=0.5, height=0.4, preamble=[r"\usepackage{fontspec}", r"\setmainfont{Noto Sans}"])
 ```
 
 
