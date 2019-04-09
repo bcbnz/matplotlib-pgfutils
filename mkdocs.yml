@@ -1,0 +1,13 @@
+site_name: matplotlib-pgfutils
+docs_dir: doc
+site_dir: build/doc
+repo_url: https://github.com/bcbnz/matplotlib-pgfutils
+edit_uri: ""
+
+nav:
+    - index.md
+    - usage.md
+    - config.md
+    - interactive.md
+    - file_tracking.md
+    - latexmk.md
