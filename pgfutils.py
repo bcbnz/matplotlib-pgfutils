@@ -495,7 +495,7 @@ def _list_opened_files():
 _interactive = False
 
 
-def setup_figure(width=1.0, height=1.0, **kwargs):
+def setup_figure(width=1.0, height=1.0, columns=None, **kwargs):
     """Set up matplotlib figures for PGF output.
 
     This function should be imported and run before you import any matplotlib
@@ -509,6 +509,11 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
         the figure should take up. If a string, a dimension in centimetres
         (cm), millimetres (mm), inches (in) or points (pt). For example, '3in'
         or '2.5 cm'.
+    columns: integer, optional
+        The number of columns the figure should span. This should be between 1
+        and the total number of columns in the document (as specified in the
+        configuration). A value of None corresponds to spanning all columns.
+        Any other value results in a ValueError being raised.
 
     """
     global _config, _interactive
@@ -611,16 +616,49 @@ def setup_figure(width=1.0, height=1.0, **kwargs):
     matplotlib.rcParams['savefig.facecolor'] = _config['pgfutils'].getcolor('figure_background')
     matplotlib.rcParams['axes.facecolor'] = _config['pgfutils'].getcolor('axes_background')
 
-    # Figure out the figure width. If it is a float, it is a fraction of
-    # textwidth.  Otherwise, assume it's an explicit dimension.
+    # Now we need to figure out the total width available for the figure, i.e.,
+    # the width corresponding to the figure parameter being 1.
+    # First, look up some document properties.
+    text_width = _config['tex'].getdimension('text_width')
+    num_columns = _config['tex'].getint('num_columns')
+
+    # Columns not specified, or spanning all available.
+    if columns is None or columns == num_columns:
+        available_width = text_width
+
+    # More columns than present in the document.
+    elif columns > num_columns:
+        msg = "Document has {} columns, but you asked for a figure spanning {} columns."
+        raise ValueError(msg.format(num_columns, columns))
+
+    # Not sure what this would mean.
+    elif columns < 1:
+        raise ValueError("Number of columns must be at least one.")
+
+    # A number of columns less than the total.
+    else:
+        # Figure out the width of each column. N columns have
+        # N - 1 separators between them.
+        columnsep = _config['tex'].getdimension('columnsep')
+        total_columnsep = columnsep * (num_columns - 1)
+        total_columnw = text_width - total_columnsep
+        column_width = total_columnw / num_columns
+
+        # And the width (including the separators between them)
+        # of the requested number of columns.
+        available_width = (column_width * columns) + (columnsep * (columns - 1))
+
+    # And now we can calculate the actual figure width. If it is a float, it is
+    # a fraction of the total available width.  Otherwise, assume it's an
+    # explicit dimension.
     try:
         w = float(width)
     except ValueError:
         w = _config.parsedimension(width)
     else:
-        w *= _config['tex'].getdimension('text_width')
+        w *= available_width
 
-    # And repeat for the figure height.
+    # And the figure height.
     try:
         h = float(height)
     except ValueError:
