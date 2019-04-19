@@ -55,16 +55,18 @@ The PGF backend can use one of three TeX engines to measure strings etc:
 The width and height of the text area in the document are given in the
 `text_width` and `text_height` values, with the default values being taken from
 a `xelatex` document using the article class with no adjust of margins etc. The
-dimensions of a TeX document can be measured using the `layout` package:
+dimensions of a TeX document can be measured using the `layouts` package:
 
 ```tex
 \documentclass{article}
 
-\usepackage{layout}
+\usepackage{layouts}
 
 \begin{document}
 
-\layout{}
+\begin{figure}
+  \currentpage\pagedesign
+\end{figure}
 
 \end{document}
 ```
