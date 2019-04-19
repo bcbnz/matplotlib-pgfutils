@@ -1,9 +1,46 @@
 from setuptools import setup
 from pgfutils import __version__
+import os.path
+from glob import glob
 
+# Load the readme as the long description,
+# mostly for PyPI's benefit.
 with open("README.md", 'r') as f:
     long_desc = f.read()
 
+
+# Data files we want to install in /share.
+# First, some simple static ones.
+data_files = [
+    ['share/matplotlib-pgfutils/', ['extras/pgfutils.cfg', 'extras/latexmkrc']],
+    ['share/matplotlib-pgfutils/examples', ['extras/examples/README.md']],
+]
+
+# And now to programmatically load the examples.
+for obj in glob('extras/examples/*'):
+    if not os.path.isdir(obj):
+        continue
+
+    # The final install directory for this example.
+    install_dir = 'share/matplotlib-pgfutils/examples/' + os.path.basename(obj)
+
+    # Find all suitable files in this example directory.
+    files = []
+    for fullname in glob(obj + "/*"):
+        fn = os.path.basename(fullname)
+        stem, ext = os.path.splitext(fn)
+        if fn in {'latexmkrc', 'Makefile', 'pgfutils.cfg'}:
+            files.append(fullname)
+        elif ext in {'.py', '.tex'}:
+            files.append(fullname)
+
+    # And, if we found at least one thing to install,
+    # add it to the overall list.
+    if files:
+        data_files.append([install_dir, files])
+
+
+# And hand over to setuptools for the rest.
 setup(
     name="matplotlib-pgfutils",
     version=__version__,
@@ -24,8 +61,5 @@ setup(
     install_requires=[
         "matplotlib >= 1.2",
     ],
-    data_files=[
-        ['share/matplotlib-pgfutils/', ['extras/pgfutils.cfg', 'extras/latexmkrc']],
-    ],
-    zip_safe=False,
+    data_files=data_files,
 )
