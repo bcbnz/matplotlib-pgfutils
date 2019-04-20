@@ -52,10 +52,23 @@ save()
 [2]: https://matplotlib.org/
 
 
+Requirements
+------------
+
+Using pgfutils requires Python 3. Each commit is currently tested with release
+versions of Python 3.5, 3.6, and 3.7, as well as a development version of
+Python 3.8.
+
+The only external dependency is matplotlib. All the other dependencies are part
+of the standard Python library.
+
+
 License
 -------
 
-pgfutils is released under the three-clause BSD license.
+pgfutils is released under the three-clause BSD license. The terms of this
+license can be found in the LICENSE file in the source, or online at
+https://opensource.org/licenses/BSD-3-Clause
 
 The Cotham Sans font used in some unit tests is copyright (c) 2015 Sebastien
 Sanfilippo and is licensed under the SIL Open Font License, Version 1.1. The

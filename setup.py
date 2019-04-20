@@ -2,11 +2,20 @@ from setuptools import setup
 from pgfutils import __version__
 import os.path
 from glob import glob
+import re
 
 # Load the readme as the long description,
 # mostly for PyPI's benefit.
 with open("README.md", 'r') as f:
     long_desc = f.read()
+
+# Turn relative links into absolute ones pointing
+# at the file in the master branch of the repository.
+long_desc = re.sub(
+        r"(\[[^]]+]\()(?!http)(.+\))",
+        r"\1https://github.com/bcbnz/matplotlib-pgfutils/blob/master/\2",
+        long_desc
+)
 
 
 # Data files we want to install in /share.
@@ -47,6 +56,7 @@ setup(
     description="Utilities for generating PGF figures from Matplotlib",
     long_description=long_desc,
     long_description_content_type="text/markdown",
+    url="https://github.com/bcbnz/matplotlib-pgfutils",
     author="Blair Bonnett",
     author_email="blair.bonnett@gmail.com",
     license="BSD",
