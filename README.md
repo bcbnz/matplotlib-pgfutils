@@ -66,6 +66,16 @@ The only external dependency is matplotlib. All the other dependencies are part
 of the standard Python library.
 
 
+Examples
+--------
+
+pgfutils comes with some examples which demonstrate its usage and integration
+into a build system. Depending on your installation method, these may be
+present somewhere in your filesystem (e.g., on a Linux system, they might be at
+`/usr/share/matplotlib-pgfutils/examples`). They can also be found in the
+[extras/examples directory](extras/examples).
+
+
 Documentation
 -------------
 

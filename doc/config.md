@@ -4,9 +4,10 @@ Configuration
 Primary configuration is done through a configuration file. This should be
 named `pgfutils.cfg` and placed in the top-level directory, i.e., where you run
 the scripts from. An example configuration file containing the default settings
-is [available in the extras/ directory](../extras/pgfutils.cfg) of the project.
+is available in the extras/ directory of the source code, or can be viewed [on
+the GitHub repository][1].
 
-The configuration file is processed by the [configparser][1] module which uses
+The configuration file is processed by the [configparser][2] module which uses
 a file structure similar to that of a Windows INI file.  Four sections can be
 present:
 
@@ -187,7 +188,7 @@ enabled if you want to use it.
 Matplotlib rcParams
 -------------------
 
-Matplotlib can be customised using its [rcParams][2] system (this is how
+Matplotlib can be customised using its [rcParams][3] system (this is how
 pgfutils sets up figures). If you want to override rcParams settings, you can
 specify them in the `rcParams` section:
 
@@ -245,5 +246,6 @@ drawing commands. As TikZ is a superset of PGF, this should work in most cases,
 although errors may occur in some figures.
 
 
-[1]: https://docs.python.org/library/configparser.html
-[2]: https://matplotlib.org/users/customizing.html
+[1]: https://github.com/bcbnz/matplotlib-pgfutils/blob/master/extras/pgfutils.cfg
+[2]: https://docs.python.org/library/configparser.html
+[3]: https://matplotlib.org/users/customizing.html
