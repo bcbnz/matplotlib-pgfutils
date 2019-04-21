@@ -24,7 +24,7 @@ figure, and rerun latex), or run `latexmk -interaction=nonstopmode` to let it
 do this automatically.
 
 Internally, latexmk keeps a database of all generated files and their
-dependencies. We can take advantage of pgfutil's ability to [track opened
+dependencies. We can take advantage of pgfutils' ability to [track opened
 files](file_tracking.md) to add any source data files to the dependencies, and
 any rasterised images to the generated files list. This means that if you
 change a data file (e.g., a saved NumPy array), the figure will be
