@@ -692,7 +692,7 @@ def save(figure=None):
     """
     global _config, _interactive
 
-    from matplotlib import pyplot as plt
+    from matplotlib import pyplot as plt, __version__ as mpl_version
 
     # Get the current figure if needed.
     if figure is None:
@@ -751,7 +751,8 @@ def save(figure=None):
         return
 
     # Look at the next frame up for the name of the calling script.
-    name, ext = os.path.splitext(inspect.getfile(sys._getframe(1)))
+    script = inspect.getfile(sys._getframe(1))
+    name, ext = os.path.splitext(script)
 
     # The initial Matplotlib output file, and the final figure file.
     mpname = name + ".pgf"
@@ -810,7 +811,13 @@ def save(figure=None):
         # Update the creator line at the start of the header.
         line = infile.readline()[:-1]
         outfile.write(line)
-        outfile.write(", matplotlib-pgfutils\n")
+        outfile.write(" v")
+        outfile.write(mpl_version)
+        outfile.write(", matplotlib-pgfutils v")
+        outfile.write(__version__)
+        outfile.write('\n%%  Script: ')
+        outfile.write(os.path.abspath(script))
+        outfile.write('\n')
 
         # Update the \input instructions.
         outfile.write(infile.readline())
