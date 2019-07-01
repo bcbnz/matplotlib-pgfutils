@@ -64,12 +64,10 @@ def test_legend_parameters():
 
     # Go through and find some values of interest.
     text_sizes = []
-    in_scope = 0
-    fill = []
-    fillopacity = -1
-    stroke = []
-    strokeopacity = -1
-    linewidth = -1
+    current_scope = []
+    found_legend_scope = False
+    legend_scope = None
+
     with open("tests/sources/legend/legend_only.pypgf", 'r') as f:
         for line in f:
             line = line.strip()
@@ -79,29 +77,51 @@ def test_legend_parameters():
             if r'\pgftext' in line:
                 text_sizes.extend(map(float, re.findall(r'.+\\fontsize\{([\d.]+)}', line)))
 
-            # Count the scopes. If this is as deterministic as I
-            # assume we can pull out the one drawing the background box of the legend...
-            elif line in {r'\begin{pgfscope}%', r'\end{pgfscope}%'}:
-                in_scope += 1
+            # Start of a scope.
+            elif r'\begin{pgfscope}' in line:
+                current_scope = []
+                found_legend_scope = False
 
-            # ... which is this one.
-            if in_scope == 3:
-                if r'\definecolor{currentfill}' in line:
-                    fill = list(map(float, re.findall(r'[\d.]+', line)))
-                elif r'\pgfsetfillopacity' in line:
-                    fillopacity = float(re.findall(r'[\d.]+', line)[0])
-                elif r'\definecolor{currentstroke}' in line:
-                    stroke = list(map(float, re.findall(r'[\d.]+', line)))
-                elif r'\pgfsetstrokeopacity' in line:
-                    strokeopacity = float(re.findall(r'[\d.]+', line)[0])
-                elif r'\pgfsetlinewidth' in line:
-                    linewidth = float(re.findall(r'[\d.]+', line)[0])
+            # End of a scope.
+            elif r'\end{pgfscope}' in line and found_legend_scope:
+                legend_scope = list(current_scope)
+
+            # Only the legend contains a background.
+            elif r'\definecolor{currentfill}' in line:
+                found_legend_scope = True
+
+            # Add the line to the current scope.
+            current_scope.append(line)
+
+    # Check the text sizes are correct.
+    assert text_sizes == approx([14, 14, 14]), "Legend font sizes are incorrect."
+
+    # No legend found.
+    if not legend_scope:
+        raise AssertionError("Could not find PGF scope containing legend.")
+
+    # Pull out properties set within the legend scope.
+    fill = []
+    fillopacity = -1
+    stroke = []
+    strokeopacity = -1
+    linewidth = -1
+    for line in legend_scope:
+        if r'\definecolor{currentfill}' in line:
+            fill = list(map(float, re.findall(r'[\d.]+', line)))
+        elif r'\pgfsetfillopacity' in line:
+            fillopacity = float(re.findall(r'[\d.]+', line)[0])
+        elif r'\definecolor{currentstroke}' in line:
+            stroke = list(map(float, re.findall(r'[\d.]+', line)))
+        elif r'\pgfsetstrokeopacity' in line:
+            strokeopacity = float(re.findall(r'[\d.]+', line)[0])
+        elif r'\pgfsetlinewidth' in line:
+            linewidth = float(re.findall(r'[\d.]+', line)[0])
 
     # Now check the values are correct. Note the increased margin for the
     # line size -- the output value often seems to be a wee way off the
     # number. I'd guess this is due to some rounding in the exporter. At
     # the end of the day 0.1 of a point is not that noticeable!
-    assert text_sizes == approx([14, 14, 14]), "Legend font sizes are incorrect."
     assert fill == approx([0, 0.5, 1]), "Legend background colour is wrong."
     assert fillopacity == approx(0.7), "Legend background opacity is wrong."
     assert stroke == approx([1, 0.5, 0]), "Legend border colour is wrong."
