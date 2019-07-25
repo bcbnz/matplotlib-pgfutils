@@ -158,3 +158,83 @@ class TestSetupFigureClass:
         """Test setup_figure() rejects unknown configuration options..."""
         with raises(KeyError):
             setup_figure(width=1, height=1, border_width=3)
+
+
+    def test_setup_margin(self):
+        """Test setup_figure() generates margin figures with margin=True..."""
+        setup_figure()
+        margin = _config['tex'].getdimension('marginpar_width')
+        height = _config['tex'].getdimension('text_height')
+
+        # Fractional tests.
+        for w_in in {1.0, 0.5, 1.2}:
+            for h_in in {0.3, 0.25, 0.5}:
+                _config_reset()
+                setup_figure(width=w_in, height=h_in, margin=True)
+                w, h = matplotlib.rcParams['figure.figsize']
+                assert w == approx(w_in * margin)
+                assert h == approx(h_in * height)
+
+        # Specific size.
+        _config_reset()
+        setup_figure(width="1.8in", height="1.2in", margin=True)
+        w, h = matplotlib.rcParams['figure.figsize']
+        assert w == approx(1.8)
+        assert h == approx(1.2)
+
+
+    def test_setup_full_width(self):
+        """Test setup_figure() generates full-width figures with full_width=True..."""
+        setup_figure()
+        text = _config['tex'].getdimension('text_width')
+        sep = _config['tex'].getdimension('marginpar_sep')
+        margin = _config['tex'].getdimension('marginpar_width')
+        full = text + sep + margin
+        height = _config['tex'].getdimension('text_height')
+
+        # Fractional tests.
+        for w_in in {1.0, 0.75, 1.1}:
+            for h_in in {0.4, 0.35, 0.15}:
+                _config_reset()
+                setup_figure(width=w_in, height=h_in, full_width=True)
+                w, h = matplotlib.rcParams['figure.figsize']
+                assert w == approx(w_in * full)
+                assert h == approx(h_in * height)
+
+        # Specific size.
+        _config_reset()
+        setup_figure(width="5.5in", height="3.6in", full_width=True)
+        w, h = matplotlib.rcParams['figure.figsize']
+        assert w == approx(5.5)
+        assert h == approx(3.6)
+
+
+    def test_setup_arg_priority(self):
+        """Test priority of columns/margin/full_width arguments to setup_figure()..."""
+        setup_figure()
+        text = _config['tex'].getdimension('text_width')
+        sep = _config['tex'].getdimension('marginpar_sep')
+        margin = _config['tex'].getdimension('marginpar_width')
+        full = text + sep + margin
+        height = _config['tex'].getdimension('text_height')
+
+        # All three: full width should take priority.
+        _config_reset()
+        setup_figure(width=1, height=0.4, columns=1, margin=True, full_width=True)
+        w, h = matplotlib.rcParams['figure.figsize']
+        assert w == approx(full)
+        assert h == approx(0.4 * height)
+
+        # Margin and full width: full width should take priority.
+        _config_reset()
+        setup_figure(width=1, height=0.4, margin=True, full_width=True)
+        w, h = matplotlib.rcParams['figure.figsize']
+        assert w == approx(full)
+        assert h == approx(0.4 * height)
+
+        # Margin and columns: margin should take priority.
+        _config_reset()
+        setup_figure(width=1, height=0.4, columns=1, margin=True)
+        w, h = matplotlib.rcParams['figure.figsize']
+        assert w == approx(margin)
+        assert h == approx(0.4 * height)

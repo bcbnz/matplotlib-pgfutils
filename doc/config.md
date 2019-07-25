@@ -47,6 +47,8 @@ The default settings for the ``tex`` section are as follows:
 engine = xelatex
 text_width = 345 points
 text_height = 550 points
+marginpar_width = 65 points
+marginpar_sep = 11 points
 num_columns = 1
 columnsep = 10 points
 ```
@@ -73,6 +75,11 @@ dimensions of a TeX document can be measured using the `layouts` package:
 ```
 
 This prints a diagram in the output document showing the dimensions.
+
+The `marginpar_width` and `marginpar_sep` refer to the width of the margin
+notes and the separator between the main text area and the margin notes. They
+are used when generating figures which fit in the margin notes, or which span
+the main text area and the margin notes.
 
 The number of columns and the width of the separators between them are only
 used when generating figures for multiple-column documents.

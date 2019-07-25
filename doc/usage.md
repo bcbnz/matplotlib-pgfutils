@@ -98,6 +98,45 @@ now results in a 4 inch wide figure (i.e., 80% of the 5 inches that would make
 up a full two columns).
 
 
+Margin figures and full-width figures
+-------------------------------------
+
+Some LaTeX document classes (e.g., those in the [Tufte-LaTeX][1] project) have
+the option to place figures in the margin notes. To generate a figure to fit
+within the margin, make sure the `marginpar_width` parameter in your
+[configuration](config.md) is correct, and pass `margin=True` when calling the
+`setup_figure()` function:
+
+```python
+setup_figure(height=0.2, margin=True)
+```
+
+This will result in a figure that spans the margin and is 20% of the text
+height. If a floating point number is given to the `width` parameter, this is
+interpreted relative to the margin width, i.e., to create a figure spanning 80%
+of the margin:
+
+```python
+setup_figure(width=0.8, height=0.2, margin=True)
+```
+
+It is sometimes desirable to create a figure spanning the full width of such a
+document, i.e., the main text area, the margin notes, and any separator between
+them. To do this, make sure the `marginpar_width` and `marginpar_sep` values in
+your [configuration](config.md) are correct, and pass `full_width=True` when
+calling the setup function:
+
+```python
+setup_figure(height=0.3, full_width=True)
+```
+
+Again, a fractional width is interpreted relative to the full width.
+
+If `full_width=True`, then the values of the `margin` and `columns` parameters
+are ignored. Similarly, if `margin=True` and `full_width=False`, then the value
+of `columns` is ignored.
+
+
 Saving
 ------
 

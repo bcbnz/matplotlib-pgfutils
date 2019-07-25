@@ -348,6 +348,8 @@ def _config_reset():
            'engine': 'xelatex',
            'text_width': '345 points',
            'text_height': '550 points',
+           'marginpar_width': '65 points',
+           'marginpar_sep': '11 points',
            'num_columns': '1',
            'columnsep': '10 points',
         },
@@ -495,7 +497,8 @@ def _list_opened_files():
 _interactive = False
 
 
-def setup_figure(width=1.0, height=1.0, columns=None, **kwargs):
+def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
+                 full_width=False, **kwargs):
     """Set up matplotlib figures for PGF output.
 
     This function should be imported and run before you import any matplotlib
@@ -504,16 +507,28 @@ def setup_figure(width=1.0, height=1.0, columns=None, **kwargs):
 
     Parameters
     ----------
-    width, height: float or string
+    width, height : float or string
         If a float, the fraction of the corresponding text width or height that
         the figure should take up. If a string, a dimension in centimetres
         (cm), millimetres (mm), inches (in) or points (pt). For example, '3in'
         or '2.5 cm'.
-    columns: integer, optional
+    columns : integer, optional
         The number of columns the figure should span. This should be between 1
         and the total number of columns in the document (as specified in the
         configuration). A value of None corresponds to spanning all columns.
         Any other value results in a ValueError being raised.
+    margin : Boolean, default False
+        If True, a margin figure (i.e., one to fit within the margin notes in
+        the document) is generated. If the width is a fraction, it is treated
+        as a fraction of the marginpar_width configuration setting. The height
+        is still treated as a fraction of the text height. The columns setting
+        is ignored if this is True.
+    full_width : Boolean, default False
+        If True, a full-width figure, i.e., one spanning the main text, the
+        margin notes, and the separator between them, is generated. A
+        fractional width is treated relative to the full width. The height is
+        still treated as a fraction of the text height. The columns and margin
+        parameters are ignored if this is True.
 
     """
     global _config, _interactive
@@ -620,10 +635,20 @@ def setup_figure(width=1.0, height=1.0, columns=None, **kwargs):
     # the width corresponding to the figure parameter being 1.
     # First, look up some document properties.
     text_width = _config['tex'].getdimension('text_width')
+    margin_width = _config['tex'].getdimension('marginpar_width')
+    margin_sep = _config['tex'].getdimension('marginpar_sep')
     num_columns = _config['tex'].getint('num_columns')
 
+    # Full-width figure.
+    if full_width:
+        available_width = text_width + margin_sep + margin_width
+
+    # Making a margin figure.
+    elif margin:
+        available_width = margin_width
+
     # Columns not specified, or spanning all available.
-    if columns is None or columns == num_columns:
+    elif columns is None or columns == num_columns:
         available_width = text_width
 
     # More columns than present in the document.
