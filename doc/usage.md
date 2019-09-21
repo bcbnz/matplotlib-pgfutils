@@ -150,3 +150,5 @@ The filename for the output figure is automatically generated as the name of
 the script with the extension replaced with '.pypgf'. For example, in a script
 called `magnitude_stats.py`, calling `save()` will generate a figure named
 `magnitude_stats.pypgf`.
+
+[1]: https://tufte-latex.github.io/tufte-latex/
