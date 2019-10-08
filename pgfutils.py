@@ -813,9 +813,13 @@ def save(figure=None):
     # any required modifications.
     pp_funcs = []
 
+    # Local cache of postprocessing options.
+    fix_raster_paths = _config['postprocessing'].getboolean('fix_raster_paths')
+    tikzpicture = _config['postprocessing'].getboolean('tikzpicture')
+
     # Add the appropriate directory prefix to all raster images
     # included via \pgfimage.
-    if _config['postprocessing'].getboolean('fix_raster_paths'):
+    if fix_raster_paths:
         figdir = os.path.dirname(figname) or '.'
 
         # Only apply this if the figure is not in the top-level directory.
@@ -826,60 +830,59 @@ def save(figure=None):
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Use the tikzpicture environment rather than pgfpicture.
-    if _config['postprocessing'].getboolean('tikzpicture'):
+    if tikzpicture:
         expr = re.compile(r"\\(begin|end){pgfpicture}")
         repl = r"\\\1{tikzpicture}"
         pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Postprocess the figure, moving it into the final destination.
     with open(mpname, 'r') as infile, open(figname, 'w') as outfile:
-        # Update the creator line at the start of the header.
-        line = infile.readline()[:-1]
-        outfile.write(line)
-        outfile.write(" v")
-        outfile.write(mpl_version)
-        outfile.write(", matplotlib-pgfutils v")
-        outfile.write(__version__)
-        outfile.write('\n%%  Script: ')
-        outfile.write(os.path.abspath(script))
-        outfile.write('\n')
 
-        # Update the \input instructions.
-        outfile.write(infile.readline())
-        outfile.write(infile.readline())
-        _ = infile.readline()
-        outfile.write("%%   \\input{")
-        outfile.write(figname)
-        outfile.write("}\n")
-
-        # Copy the preamble instructions.
-        outfile.write(infile.readline())
-        outfile.write(infile.readline())
-        line = infile.readline()
-        if _config['postprocessing'].getboolean('tikzpicture'):
-            outfile.write("%%   \\usepackage{tikz}\n")
-        else:
-            outfile.write(line)
-        outfile.write(infile.readline())
-
-        # If we've updated the raster image directory, we can delete the
-        # instructions about getting them to appear.
-        if _config['postprocessing'].getboolean('fix_raster_paths'):
-            for n in range(7):
-                _ = infile.readline()
-
-        # Otherwise we need to copy them over.
-        else:
-            for n in range(7):
-                outfile.write(infile.readline())
-
-        # Ignore the rest of the header (which includes the preamble which was
-        # used). The first non-header line is \begingroup which we don't want
-        # to change anyway.
+        # Make some modifications to the header.
         line = infile.readline()
         while line[0] == '%':
-            outfile.write(line)
+            # Update the creator line to include pgfutils version, and add a
+            # line with the path of the script that created the figure.
+            if "Creator:" in line:
+                outfile.write(line[:-1])
+                outfile.write(" v")
+                outfile.write(mpl_version)
+                outfile.write(", matplotlib-pgfutils v")
+                outfile.write(__version__)
+                outfile.write('\n%%  Script: ')
+                outfile.write(os.path.abspath(script))
+                outfile.write('\n')
+
+            # Update the \input instructions.
+            elif r"\input{<filename>.pgf}" in line:
+                outfile.write("%%   \\input{")
+                outfile.write(figname)
+                outfile.write("}\n")
+
+            # If we're changing the figure to use the tikzpicture environment, we also
+            # need to update the required package.
+            elif tikzpicture and r"\usepackage{pgf}" in line:
+                outfile.write("%%    \\usepackage{tikz}\n")
+
+            # If we're fixing the paths to rasterised images, we can remove the
+            # instructions about using the import package.
+            elif fix_raster_paths and line.startswith("%% Figures using additional raster"):
+                while r"\import{<path to file>}" not in line:
+                    line = infile.readline()
+
+                # Discard blank line after the statement too.
+                infile.readline()
+
+            # Copy the original line.
+            else:
+                outfile.write(line)
+
+            # Next line of header.
             line = infile.readline()
+
+        # Post-process and write the first line after the header.
+        for func in pp_funcs:
+            line = func(line)
         outfile.write(line)
 
         # Apply the postprocessing to the remainder of the file.
