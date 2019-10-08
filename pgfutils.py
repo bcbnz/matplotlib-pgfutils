@@ -257,7 +257,7 @@ class PgfutilsParser(configparser.ConfigParser):
 
     def getcolor(self, section, option, **kwargs):
         """Return a configuration entry as a Matplotlib color.
- 
+
         Recognised color formats are:
             * Named colors (red, yellow, etc.)
             * Cycle colors (C1, C2 etc.)
@@ -265,7 +265,7 @@ class PgfutilsParser(configparser.ConfigParser):
               [0, 1]
             * A floating-point value in [0, 1] for grayscale
             * 'none', 'transparent', or an empty value for transparent.
- 
+
         Parameters
         ----------
         section, option: string
@@ -821,7 +821,7 @@ def save(figure=None):
         # Only apply this if the figure is not in the top-level directory.
         if not os.path.samefile(figdir, os.curdir):
             prefix = os.path.relpath(figdir)
-            expr = re.compile(r"(\\pgfimage(?:\[.+?\])?{)(.+?)}")
+            expr = re.compile(r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)(.+?)}")
             repl = r"\1{0:s}/\2}}".format(prefix)
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
