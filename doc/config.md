@@ -100,7 +100,7 @@ legend_font_size = 10
 line_width = 1
 axes_line_width = 0.6
 legend_line_width = 0.6
-figure_background = 
+figure_background =
 axes_background = white
 preamble=
 ```
@@ -229,7 +229,7 @@ tikzpicture = no
 ```
 
 
-### `fix_raster_dir`
+### `fix_raster_paths`
 
 The PGF backend has no knowledge of the directory structure. When creating a
 rasterized image to include in the figure (e.g., a PNG image of an array you've
@@ -237,9 +237,11 @@ used `imshow` on), it assumes the figure will be in the same directory as the
 main TeX file. Accordingly, the image is included using `\pgfimage{name.png}`.
 If you have your figures in a separate directory such as `figures/`, inputting
 the figure will fail. There are TeX packages which can work around this, but it
-is probably simpler to let pgfutils take care of it. If the `fix_raster_dir`
-postprocessing option is set to True, any calls to `\pgfimage` will be updated
-to include the relative directory of the figure.
+is probably simpler to let pgfutils take care of it. If the `fix_raster_paths`
+postprocessing option is set to True, any calls to `\pgfimage` or
+`\includegraphics` will be updated to include the relative directory of the
+figure. For this to work, the script **must** be run from the same directory as
+your top-level TeX file.
 
 
 ### `tikzpicture`
@@ -247,7 +249,7 @@ to include the relative directory of the figure.
 The PGF backend creates the figure within a `pgfpicture` environment. Although
 this is fine most of the time, the TikZ external library (which 'externalises'
 TikZ images to PDF to reduce compilation time) requires the `tikzpicture`
-environment. Enabling this postprocesing option will change the environment
+environment. Enabling this postprocessing option will change the environment
 used for the figure to `tikzpicture`. Note that it does not change any of the
 drawing commands. As TikZ is a superset of PGF, this should work in most cases,
 although errors may occur in some figures.
