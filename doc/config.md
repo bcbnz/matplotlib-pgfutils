@@ -57,8 +57,8 @@ The PGF backend can use one of three TeX engines to measure strings etc:
 `xelatex`, `pdflatex` or `lualatex`. This is specified in the `engine` setting.
 The width and height of the text area in the document are given in the
 `text_width` and `text_height` values, with the default values being taken from
-a `xelatex` document using the article class with no adjust of margins etc. The
-dimensions of a TeX document can be measured using the `layouts` package:
+a `xelatex` document using the article class with no adjustment of margins etc.
+The dimensions of a TeX document can be measured using the `layouts` package:
 
 ```tex
 \documentclass{article}
@@ -96,20 +96,24 @@ configuration:
 font_family = serif
 font_name =
 font_size = 10
-legend_font_size = 10
-line_width = 1
-axes_line_width = 0.6
-legend_line_width = 0.6
 figure_background =
 axes_background = white
+line_width = 1
+axes_line_width = 0.6
+legend_border_width = 0.6
+legend_border_color = (0.8, 0.8, 0.8)
+legend_background = (1, 1, 1)
+legend_opacity = 0.8
+legend_font_size = 10
 preamble=
+preamble_substitute = false
 ```
 
 ### Background colours
 
-The general background of the figure (i.e., of the area outside of any axes in
-it) is set by the `figure_color` option. The background of the axes in the
-figure is set by `axes_color`.
+The general background of the figure (i.e., the area outside of any axes in it)
+is set by the `figure_background` option. The background of the axes in the
+figure is set by `axes_background`.
 
 
 ### Font settings
@@ -212,8 +216,8 @@ used if it overrides an rcParams setting that you want to change back.
 Note that these rcParams are applied after all other figure configuration is
 complete. This means that they will completely override pgfutils. For example,
 the configuration given above would result in the figure background being blue,
-regardless of what you specify `figure_color` as in `pgfutils.cfg` options or
-the `setup_figure()` call.
+regardless of what you specify `figure_background` as in `pgfutils.cfg` options
+or the `setup_figure()` call.
 
 
 Postprocessing
