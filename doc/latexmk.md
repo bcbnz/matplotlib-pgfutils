@@ -12,7 +12,7 @@ add the following to your `latexmkrc` file:
 # Build PGF images from Python scripts.
 add_cus_dep('py', 'pypgf', 0, 'pypgf');
 sub pypgf {
-    system("python $_[0].py");
+    system("python3 $_[0].py");
 }
 ```
 
@@ -40,7 +40,7 @@ add_cus_dep('py', 'pypgf', 0, 'pypgf');
 sub pypgf {
     # Run the script and ask pgfutils to give us a list
     # of all dependencies and extra generated files.
-    my @tracked = `PGFUTILS_TRACK_FILES=1 python $_[0].py`;
+    my @tracked = `PGFUTILS_TRACK_FILES=1 python3 $_[0].py`;
 
     # Process the tracked files.
     foreach (@tracked){

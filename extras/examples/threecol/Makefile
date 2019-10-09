@@ -4,7 +4,7 @@ threecol.pdf: threecol.tex single.pypgf double.pypgf triple.pypgf
 	xelatex threecol
 
 %.pypgf: %.py pgfutils.cfg
-	python $<
+	python3 $<
 
 .PHONY: clean
 
