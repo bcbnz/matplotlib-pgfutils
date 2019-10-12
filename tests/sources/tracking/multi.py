@@ -1,4 +1,4 @@
-from pgfutils import setup_figure, save
+from pgfutils import setup_figure, add_dependencies, save
 setup_figure(width=1, height=1)
 
 import numpy as np
@@ -16,4 +16,5 @@ y = data[:, 3:]
 
 plt.scatter(x, y)
 
+add_dependencies("extra.file")
 save()

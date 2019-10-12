@@ -179,6 +179,7 @@ class TestTrackingClass:
         expected = {
             'r:noise.npy',
             'r:scatter.csv',
+            'r:extra.file',
             'w:multi-img0.png',
             'w:multi-img1.png',
         }
@@ -198,6 +199,7 @@ class TestTrackingClass:
         expected = {
             'r:noise.npy',
             'r:scatter.csv',
+            'r:extra.file',
             'w:multi-img0.png',
             'w:multi-img1.png',
         }
@@ -218,6 +220,7 @@ class TestTrackingClass:
         expected = {
             'r:noise.npy',
             'r:scatter.csv',
+            'r:extra.file',
             'w:multi-img0.png',
             'w:multi-img1.png',
         }
@@ -277,3 +280,56 @@ class TestTrackingClass:
         assert len(res.stdout.strip()) == 0, "Tracking output was not empty."
         self.cleanup()
         os.unlink(tfn)
+
+
+    def test_manual_stdout(self):
+        """File tracking to stdout with manual dependencies..."""
+        tests = {
+            "manual_dependency.py": {"r:data.file"},
+            "manual_dependencies.py": {"r:data.file", "r:another.file"},
+        }
+        for script, expected in tests.items():
+            # Run the script and check it succeeded.
+            res = build_figure(dirname, script, {'PGFUTILS_TRACK_FILES': '1'})
+            assert res.returncode == 0
+
+            # Check the output files are correct.
+            actual = set(res.stdout.strip().splitlines())
+            assert actual == expected
+            self.cleanup()
+
+
+    def test_manual_stderr(self):
+        """File tracking to stderr with manual dependencies..."""
+        tests = {
+            "manual_dependency.py": {"r:data.file"},
+            "manual_dependencies.py": {"r:data.file", "r:another.file"},
+        }
+        for script, expected in tests.items():
+            # Run the script and check it succeeded.
+            res = build_figure(dirname, script, {'PGFUTILS_TRACK_FILES': '2'})
+            assert res.returncode == 0
+
+            # Check the output files are correct.
+            actual = set(res.stderr.strip().splitlines())
+            assert actual == expected
+            self.cleanup()
+
+
+    def test_manual_file(self):
+        """File tracking to file with manual dependencies..."""
+        tfn = os.path.join(dirname, 'tracking.test.results')
+        tests = {
+            "manual_dependency.py": {"r:data.file"},
+            "manual_dependencies.py": {"r:data.file", "r:another.file"},
+        }
+        for script, expected in tests.items():
+            # Run the script and check it succeeded.
+            res = build_figure(dirname, script, {'PGFUTILS_TRACK_FILES': tfn})
+            assert res.returncode == 0
+
+            # Check the expected dependencies are reported.
+            with open(tfn, 'r') as f:
+                actual = set(f.read().splitlines())
+            assert actual == expected
+            self.cleanup()

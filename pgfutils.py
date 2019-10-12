@@ -471,6 +471,26 @@ def _install_file_trackers():
     io.open = _file_tracker(io.open)
 
 
+def add_dependencies(*args):
+    """Add a file dependency for the current figure.
+
+    In most situations, the in-built file tracking should suffice. However,
+    some files can be missed (for example, if a library you are using has its
+    file opening routines in a compiled extension rather than using Python
+    functions). This function can be used to manually add these files to the
+    dependencies of the current figure.
+
+    Parameters
+    ----------
+    fn : string
+        The filename of the dependency, relative to the top-level directory of
+        the project.
+
+    """
+    for fn in args:
+        _file_tracker.filenames.add(("r", fn))
+
+
 def _list_opened_files():
     """Internal: get project files which were opened by the script.
 
