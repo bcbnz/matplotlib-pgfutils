@@ -59,8 +59,7 @@ Requirements
 ------------
 
 Using pgfutils requires Python 3. Each commit is currently tested with release
-versions of Python 3.5, 3.6, and 3.7, as well as a development version of
-Python 3.8.
+versions of Python 3.6 and 3.7, as well as a development version of Python 3.8.
 
 The only external dependency is matplotlib. All the other dependencies are part
 of the standard Python library.
