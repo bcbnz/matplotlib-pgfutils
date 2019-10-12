@@ -1,3 +1,6 @@
+import pgfutils
+import pytest
+
 import os
 import os.path
 from .utils import build_figure, build_tex
@@ -14,6 +17,8 @@ class TestTrackingClass:
                 if ext in {'.pypgf', '.png'}:
                     os.unlink(os.path.join(root, fn))
                 if fn == 'tracking.test.results':
+                    os.unlink(os.path.join(root, fn))
+                if fn == 'test_output.nc':
                     os.unlink(os.path.join(root, fn))
 
 
@@ -333,3 +338,87 @@ class TestTrackingClass:
                 actual = set(f.read().splitlines())
             assert actual == expected
             self.cleanup()
+
+
+    def test_extra_trackers_unknown(self):
+        """File trackers raises error if unknown extra_trackers option given..."""
+        with pytest.raises(ValueError):
+            pgfutils._install_extra_file_trackers(["unknown"])
+        with pytest.raises(ValueError):
+            pgfutils._install_extra_file_trackers(["netCDF4", "unknown"])
+
+
+    def test_netcdf4_setup(self):
+        """File tracking with netCDF4 library enabled in setup()..."""
+        try:
+            import netCDF4
+        except ImportError:
+            pytest.skip("netCDF4 not installed; cannot test.")
+
+        res = build_figure(dirname, "netcdf4_in_setup.py", {"PGFUTILS_TRACK_FILES": "1"})
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        expected = {"r:netcdf4/sine.nc",}
+        assert actual == expected
+        self.cleanup()
+
+
+    def test_netcdf4_cfg(self):
+        """File tracking with netCDF4 library enabled in pgfutils.cfg..."""
+        try:
+            import netCDF4
+        except ImportError:
+            pytest.skip("netCDF4 not installed; cannot test.")
+
+        res = build_figure(os.path.join(dirname, "netcdf4"), "netcdf4.py", {"PGFUTILS_TRACK_FILES": "1"})
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        expected = {"r:sine.nc", "r:pgfutils.cfg"}
+        assert actual == expected
+        self.cleanup()
+
+
+    def test_netcdf4_ignores_written(self):
+        """File tracking ignores files written by netCDF4..."""
+        try:
+            import netCDF4
+        except ImportError:
+            pytest.skip("netCDF4 not installed; cannot test.")
+
+        res = build_figure(dirname, "netcdf4_write.py", {"PGFUTILS_TRACK_FILES": "1"})
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        assert not actual
+        self.cleanup()
+
+
+    def test_netcdf4_multi_explicit(self):
+        """File tracking works with netCDF4 MFDataset (explicit list)..."""
+        try:
+            import netCDF4
+        except ImportError:
+            pytest.skip("netCDF4 not installed; cannot test.")
+
+        res = build_figure(os.path.join(dirname, "netcdf4"), "netcdf4_multi_explicit.py",
+                {"PGFUTILS_TRACK_FILES": "1"})
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        expected = {"r:mftest0.nc", "r:mftest1.nc", "r:mftest2.nc", "r:pgfutils.cfg"}
+        assert actual == expected
+        self.cleanup()
+
+
+    def test_netcdf4_multi_glob(self):
+        """File tracking works with netCDF4 MFDataset (filename glob)..."""
+        try:
+            import netCDF4
+        except ImportError:
+            pytest.skip("netCDF4 not installed; cannot test.")
+
+        res = build_figure(os.path.join(dirname, "netcdf4"), "netcdf4_multi_glob.py",
+                {"PGFUTILS_TRACK_FILES": "1"})
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        expected = {"r:mftest0.nc", "r:mftest1.nc", "r:mftest2.nc", "r:pgfutils.cfg"}
+        assert actual == expected
+        self.cleanup()

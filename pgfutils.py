@@ -369,6 +369,7 @@ def _config_reset():
            'legend_opacity': 0.8,
            'figure_background': '',
            'axes_background': 'white',
+           'extra_tracking': '',
        },
 
        'rcParams': {
@@ -450,8 +451,8 @@ def _file_tracker(to_wrap):
 _file_tracker.filenames = set()
 
 
-def _install_file_trackers():
-    """Internal: install file trackers in likely locations.
+def _install_standard_file_trackers():
+    """Internal: install standard file trackers in likely locations.
 
     This wraps the standard open() function as well as the io.open() function.
     This seems to catch all uses of the standard NumPy `load` (for both .npy
@@ -469,6 +470,52 @@ def _install_file_trackers():
     import io
     builtins.open = _file_tracker(builtins.open)
     io.open = _file_tracker(io.open)
+
+
+def _install_extra_file_trackers(trackers):
+    """Internal: install requested extra file trackers.
+
+    Parameters
+    ----------
+    trackers : list
+        List of strings containing the names of the extra trackers to install.
+        Names are not case-sensitive. Currently only "netCDF4" is supported.
+
+    """
+    for tracker in trackers:
+        tracker = tracker.strip().lower()
+
+        # netCDF4 data storage.
+        if tracker == "netcdf4":
+            import netCDF4
+
+            # Wrap the Dataset class to modify its initialiser to track read
+            # files. The class is part of the compiled extension so we can't
+            # just override the initialiser.
+            class PgfutilsTrackedDataset(netCDF4.Dataset):
+                def __init__(self, filename, mode="r", **kwargs):
+                    super().__init__(filename, mode=mode, **kwargs)
+                    if mode == "r":
+                        _file_tracker.filenames.add(("r", filename))
+            netCDF4.Dataset = PgfutilsTrackedDataset
+
+            # Same deal for the MFDataset (multiple files read as one dataset).
+            class PgfutilsTrackedMFDataset(netCDF4.MFDataset):
+                def __init__(self, files, *args, **kwargs):
+                    super().__init__(files, *args, **kwargs)
+
+                    # Single string: glob pattern to expand.
+                    if isinstance(files, str):
+                        import glob
+                        files = glob.glob(files)
+
+                    # And track them all.
+                    for fn in files:
+                        _file_tracker.filenames.add(("r", fn))
+            netCDF4.MFDataset = PgfutilsTrackedMFDataset
+
+        else:
+            raise ValueError("Unknown extra tracker {}".format(tracker))
 
 
 def add_dependencies(*args):
@@ -556,7 +603,7 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     # Need to install our file trackers (if desired)
     # before we import Matplotlib.
     if 'PGFUTILS_TRACK_FILES' in os.environ:
-        _install_file_trackers()
+        _install_standard_file_trackers()
 
     # Reset the configuration.
     _config_reset()
@@ -568,6 +615,12 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     # And anything given in the function call.
     if kwargs:
         _config.read_kwargs(**kwargs)
+
+    # Now we can add any extra trackers specified in the config.
+    if 'PGFUTILS_TRACK_FILES' in os.environ:
+        extra = _config['pgfutils']['extra_tracking'].strip()
+        if extra:
+            _install_extra_file_trackers(extra.split(","))
 
     # Reset our interactive flag on each call.
     _interactive = False

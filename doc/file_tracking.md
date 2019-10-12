@@ -50,6 +50,28 @@ appears to still get tracked. Nonetheless, it is recommended you import and
 call `setup_figure` at the very start of your script.
 
 
+Extra tracking
+--------------
+
+By default, tracking is only installed on standard Python functions. If you use
+the [netCDF4][1] library, tracking can also be enabled for files opened by it
+(which includes other libraries that use netCDF4, such as xarray). To enable
+this project-wide, set the `extra_tracking` option to `netCDF4` in your
+configuration:
+
+```INI
+[pgfutils]
+extra_tracking = netCDF4
+```
+
+To only enable it for a specific figure, add the option to the ``setup_figure``
+call:
+
+```python
+setup_figure(width=1, height=0.4, extra_tracking="netCDF4")
+```
+
+
 Manual dependencies
 -------------------
 
@@ -71,3 +93,5 @@ save()
 Note that no checks are made on the filenames; it is assumed that, since your
 script has used them, they are correct. Any relative filenames are assumed to
 be relative to the top-level directory of the project.
+
+[1]: http://unidata.github.io/netcdf4-python/netCDF4/index.html

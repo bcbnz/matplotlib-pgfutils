@@ -107,6 +107,7 @@ legend_opacity = 0.8
 legend_font_size = 10
 preamble=
 preamble_substitute = false
+extra_tracking=
 ```
 
 ### Background colours
@@ -194,6 +195,12 @@ font_name = MyCustomFontName
 
 Note that `preamble_substitute` is off by default, i.e., it must be explicitly
 enabled if you want to use it.
+
+
+### Extra tracking
+
+This is a comma-separated list of extra libraries to install file tracking on.
+See the [file tracking](file_tracking.md) documentation for more details.
 
 
 Matplotlib rcParams
