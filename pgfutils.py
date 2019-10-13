@@ -36,7 +36,7 @@ consistent-looking plots.
 
 """
 
-__version__ = "1.3.0-beta"
+__version__ = "1.3.0"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
 # caches a reference to the io.open() method as part of its data loading
