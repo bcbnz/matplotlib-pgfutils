@@ -131,6 +131,29 @@ if( !-e $pgfutils ){
 process_rc_file($pgfutils);
 ```
 
+If you have multiple users with pgfutils installed in different locations, the
+following code searches a list of locations and loads the first available copy
+it finds:
+
+```perl
+# Load matplotlib-pgfutils support.
+my $found_pgfutils = 0;
+my @pgfutils = (
+    "/usr/share/matplotlib-pgfutils/latexmkrc",
+    "/other/path/to/matplotlib-pgfutils/latexmkrc"
+);
+foreach (@pgfutils){
+	if( -e $_ ){
+		process_rc_file($_);
+		$found_pgfutils = 1;
+		last;
+	}
+}
+if( ! $found_pgfutils ){
+    die "Could not load matplotlib-pgfutils support";
+}
+```
+
 
 Cleaning generated files
 ------------------------
