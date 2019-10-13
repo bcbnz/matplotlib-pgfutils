@@ -341,11 +341,16 @@ class TestTrackingClass:
 
 
     def test_extra_trackers_unknown(self):
-        """File trackers raises error if unknown extra_trackers option given..."""
+        """File trackers raises error if unknown extra_tracking option given..."""
         with pytest.raises(ValueError):
             pgfutils._install_extra_file_trackers(["unknown"])
-        with pytest.raises(ValueError):
-            pgfutils._install_extra_file_trackers(["netCDF4", "unknown"])
+        try:
+            import netCDF4
+        except ImportError:
+            pass
+        else:
+            with pytest.raises(ValueError):
+                pgfutils._install_extra_file_trackers(["netCDF4", "unknown"])
 
 
     def test_netcdf4_setup(self):
