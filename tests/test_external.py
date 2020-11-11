@@ -25,6 +25,10 @@ def test_seaborn():
         pytest.skip("seaborn not available for testing")
 
     res = build_figure(srcdir, "seaborn_figure.py")
+    if res.returncode != 0:
+        # Due to an upstream Matplotlib bug.
+        if "'NoneType' object has no attribute 'write'" in res.stderr:
+            pytest.xfail("https://github.com/mwaskom/seaborn/issues/2343")
     assert res.returncode == 0, "tests/sources/external/seaborn_figure.py could not be built."
     clean_dir(srcdir)
 
