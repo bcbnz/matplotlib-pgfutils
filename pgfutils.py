@@ -49,6 +49,7 @@ __version__ = "1.3.1"
 
 import configparser
 import inspect
+import io
 import os
 import os.path
 import re
@@ -385,9 +386,10 @@ def _config_reset():
 def _file_tracker(to_wrap):
     """Internal: install an opened file tracker.
 
-    To be trackable, the given callable should return some object with `name`
-    and `mode` attributes representing the filename and mode of the opened
-    file.
+    To be trackable, the given callable should return an instance of a subclass
+    of `io.IOBase`. If its `writable` method returns True, it is assumed to be
+    an output file, otherwise if its `readable` method returns True it is
+    assumed to be an input.
 
     The docstring, name etc. of the given callable are copied to the wrapper
     function that performs the tracking.
@@ -412,8 +414,8 @@ def _file_tracker(to_wrap):
         # Defer opening to the real function.
         file = to_wrap(*args, **kwargs)
 
-        # Standard IO readers store what we need in name and mode attributes.
-        if not hasattr(file, 'name') or not hasattr(file, 'mode'):
+        # Only attempt to track files implemented as standard IO objects.
+        if not isinstance(file, io.IOBase):
             return file
 
         # Integers indicate file objects that were created from descriptors
@@ -430,16 +432,16 @@ def _file_tracker(to_wrap):
         if relname.startswith('.'):
             return file
 
-        # Assume files that are read are dependencies.
-        if 'r' in file.mode:
-            _file_tracker.filenames.add(("r", relname))
-
-        # Binary files being written could be rasterised parts of the image
-        # being saved as PNGs. Confirm this by checking the filename against
-        # the pattern that the PGF backend uses.
-        elif file.mode == 'wb':
+        # If a file is writeable.
+        if file.writable():
+            # Does it match the filename pattern used by the PGF backend for
+            # rasterised parts of the image being saved as PNGs?
             if re.match(r"^.+-img\d+.png$", relname):
                 _file_tracker.filenames.add(("w", relname))
+
+        # Assume files that are read are dependencies.
+        elif file.readable():
+            _file_tracker.filenames.add(("r", relname))
 
         # Done.
         return file
