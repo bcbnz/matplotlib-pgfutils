@@ -340,7 +340,7 @@ class PgfutilsParser(configparser.ConfigParser):
 
         Parameters
         ----------
-        type : {"dependency"}
+        type : {"data"}
             The type of file to check for.
         fn : path-like
             The filename to check.
@@ -352,8 +352,8 @@ class PgfutilsParser(configparser.ConfigParser):
             directories specified in the configuration.
 
         """
-        if type == "dependency":
-            paths = self.get("paths", "dependencies").strip().splitlines()
+        if type == "data":
+            paths = self.get("paths", "data").strip().splitlines()
         else:
             raise ValueError("Unknown tracking type {0:s}.".format(type))
 
@@ -409,7 +409,7 @@ def _config_reset():
         },
 
         'paths': {
-            'dependencies': '.',
+            'data': '.',
             'pythonpath': '',
         },
 
@@ -498,8 +498,8 @@ def _file_tracker(to_wrap):
             if re.match(r"^.+-img\d+.png$", file.name):
                 _file_tracker.filenames.add(("w", _relative_if_subdir(file.name)))
 
-        # Should always be True but just in case.
-        elif file.readable() and _config.in_tracking_dir("dependency", file.name):
+        # Should always be readable in this case, but check anyway.
+        elif file.readable() and _config.in_tracking_dir("data", file.name):
             _file_tracker.filenames.add(("r", _relative_if_subdir(file.name)))
 
         # Done.

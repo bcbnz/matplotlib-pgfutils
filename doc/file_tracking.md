@@ -23,7 +23,7 @@ Dependencies
 
 Any file which is opened for reading only is treated as a possible dependency.
 Each of these files is checked to see if it is in one of the directories
-specified in the `dependencies` key of the `[paths]` section of [the
+specified in the `data` key of the `[paths]` section of [the
 configuration](config.md), or in a sub-directory of one of those directories.
 If so, it is counted as a dependency. Note that this will include the
 `pgfutils.cfg` configuration file if it exists (assuming the top-level
