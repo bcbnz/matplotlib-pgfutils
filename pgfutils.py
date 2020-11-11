@@ -36,7 +36,7 @@ consistent-looking plots.
 
 """
 
-__version__ = "1.3.1"
+__version__ = "1.4.0b1"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
 # caches a reference to the io.open() method as part of its data loading
@@ -346,40 +346,44 @@ def _config_reset():
     _config.clear()
     _config.read_dict({
         'tex': {
-           'engine': 'xelatex',
-           'text_width': '345 points',
-           'text_height': '550 points',
-           'marginpar_width': '65 points',
-           'marginpar_sep': '11 points',
-           'num_columns': '1',
-           'columnsep': '10 points',
+            'engine': 'xelatex',
+            'text_width': '345 points',
+            'text_height': '550 points',
+            'marginpar_width': '65 points',
+            'marginpar_sep': '11 points',
+            'num_columns': '1',
+            'columnsep': '10 points',
         },
 
         'pgfutils': {
-           'preamble': '',
-           'preamble_substitute': 'false',
-           'font_family': 'serif',
-           'font_name': '',
-           'font_size': '10',
-           'legend_font_size': '10',
-           'line_width': '1',
-           'axes_line_width': '0.6',
-           'legend_border_width': '0.6',
-           'legend_border_color': '(0.8, 0.8, 0.8)',
-           'legend_background': '(1, 1, 1)',
-           'legend_opacity': 0.8,
-           'figure_background': '',
-           'axes_background': 'white',
-           'extra_tracking': '',
-       },
+            'preamble': '',
+            'preamble_substitute': 'false',
+            'font_family': 'serif',
+            'font_name': '',
+            'font_size': '10',
+            'legend_font_size': '10',
+            'line_width': '1',
+            'axes_line_width': '0.6',
+            'legend_border_width': '0.6',
+            'legend_border_color': '(0.8, 0.8, 0.8)',
+            'legend_background': '(1, 1, 1)',
+            'legend_opacity': 0.8,
+            'figure_background': '',
+            'axes_background': 'white',
+            'extra_tracking': '',
+        },
 
-       'rcParams': {
-       },
+        'paths': {
+            'pythonpath': '',
+        },
 
-       'postprocessing': {
-           'fix_raster_paths': 'true',
-           'tikzpicture': 'false',
-       }
+        'rcParams': {
+        },
+
+        'postprocessing': {
+            'fix_raster_paths': 'true',
+            'tikzpicture': 'false',
+        }
     })
 
 
@@ -638,6 +642,12 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     else:
         if ipython.active_eventloop is not None:            # pragma: no cover
             _interactive = True
+
+    # Add any desired entries to sys.path.
+    for newpath in _config['paths']['pythonpath'].splitlines():
+        newpath = newpath.strip()
+        if newpath:
+            sys.path.insert(0, newpath)
 
     # We're now ready to start configuring Matplotlib.
     import matplotlib

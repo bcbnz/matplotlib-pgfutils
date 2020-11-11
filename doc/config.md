@@ -203,6 +203,28 @@ This is a comma-separated list of extra libraries to install file tracking on.
 See the [file tracking](file_tracking.md) documentation for more details.
 
 
+Path settings
+-------------
+
+If you have Python code in other libraries you want to be able to import in
+your scripts, you can use the `pythonpath` option in the `paths` section of the
+configuration file to specify custom search paths for Python. This is a
+multi-line entry with one path per line.  The paths are inserted at the start
+of `sys.path` when you call `setup_figure()`. They are inserted in the order
+given in the configuration, which means the last path in the configuration will
+be the first entry in `sys.path`. They are not modified or checked in any way.
+Relative paths will therefore be interpreted by Python as being relative to the
+directory it was run from, which should be the top-level directory of your
+project.
+
+```INI
+[paths]
+pythonpath =
+  pythonlib/
+  /usr/share/myotherlib
+```
+
+
 Matplotlib rcParams
 -------------------
 
