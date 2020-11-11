@@ -4,11 +4,16 @@ File tracking
 In many cases, PGF figures will be used to plot external data. If you are using
 a build system, it is useful to have it automatically rebuild the figure when
 the data is changed. To this end, pgfutils can be told to monitor any files
-that are opened and output them at the end of the compilation. This is enabled
-by setting the `PGFUTILS_TRACK_FILES` environment variable. If this variable is
-set to 1 (or no value is given), then the list of files is output to `stdout`.
-If it is set to 2, the list is printed to `stderr`. Any other value is
-interpreted as a filename, and the list written to that file.
+that are opened and output them at the end of the compilation. This tracking
+will also include any Python files which are imported. Only files in specific
+directories are tracked -- the corresponding configuration options are detailed
+below.
+
+The tracking is enabled by setting the `PGFUTILS_TRACK_FILES` environment
+variable. If this variable is set to 1 (or no value is given), then the list of
+files is output to `stdout`.  If it is set to 2, the list is printed to
+`stderr`. Any other value is interpreted as a filename, and the list written to
+that file.
 
 The tracked files are output in the format `mode:filename`, where mode is `r`
 for files that were read (dependencies) and `w` for files that were written
@@ -18,8 +23,8 @@ be an absolute filename.  For an example of using this file tracking in a build
 system, see the [latexmk integration](latexmk.md) documentation.
 
 
-Dependencies
-------------
+Data dependencies
+-----------------
 
 Any file which is opened for reading only is treated as a possible dependency.
 Each of these files is checked to see if it is in one of the directories
@@ -28,6 +33,17 @@ configuration](config.md), or in a sub-directory of one of those directories.
 If so, it is counted as a dependency. Note that this will include the
 `pgfutils.cfg` configuration file if it exists (assuming the top-level
 directory has not been removed from the list of dependency paths).
+
+
+Python imports
+--------------
+
+Any imported modules which are from directories (or their sub-directories) in
+the `paths.pythonpath` and `paths.extra_import` configuration settings are
+treated as dependencies. Note that by default this does not include any
+libraries installed system-wide or in a user-specific location -- if you want
+this, you can add the appropriate directories to the `paths.extra_import`
+[configuration option](config.md).
 
 
 Generated files

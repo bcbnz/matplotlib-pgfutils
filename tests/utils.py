@@ -25,8 +25,11 @@ def build_figure(working_dir, filename, environment=None):
 
     """
     # Build an environment to run it in.
+    environment = environment or {}
     env = dict(os.environ)
-    env['PYTHONPATH'] = ':'.join(os.path.normpath(p) for p in sys.path)
+    paths = environment.pop("PYTHONPATH", "").split(":")
+    paths.extend(os.path.normpath(p) for p in sys.path)
+    env['PYTHONPATH'] = ':'.join(paths)
     env.update(environment or {})
 
     # Move into the desired working directory.

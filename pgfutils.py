@@ -1,4 +1,4 @@
-# Copyright 2018, 2019 Blair Bonnett
+# Copyright 2018, 2019, 2020 Blair Bonnett
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -48,6 +48,7 @@ __version__ = "1.4.0b1"
 # different functions.
 
 import configparser
+import importlib
 import inspect
 import io
 import os
@@ -340,7 +341,7 @@ class PgfutilsParser(configparser.ConfigParser):
 
         Parameters
         ----------
-        type : {"data"}
+        type : {"data", "import"}
             The type of file to check for.
         fn : path-like
             The filename to check.
@@ -354,6 +355,9 @@ class PgfutilsParser(configparser.ConfigParser):
         """
         if type == "data":
             paths = self.get("paths", "data").strip().splitlines()
+        elif type == "import":
+            paths = self.get("paths", "pythonpath").strip().splitlines()
+            paths.extend(self.get("paths", "extra_imports").strip().splitlines())
         else:
             raise ValueError("Unknown tracking type {0:s}.".format(type))
 
@@ -411,6 +415,7 @@ def _config_reset():
         'paths': {
             'data': '.',
             'pythonpath': '',
+            'extra_imports': '',
         },
 
         'rcParams': {
@@ -512,6 +517,44 @@ def _file_tracker(to_wrap):
 _file_tracker.filenames = set()
 
 
+class ImportTracker(importlib.abc.MetaPathFinder):
+    """Import finder which tracks imported files in configured paths.
+
+    """
+    def __init__(self):
+        super().__init__()
+        self._avoid_recursion = set()
+        self.imported = set()
+
+    def find_spec(self, fullname, path, target=None):
+        # According to PEP451, this is mostly intended for a reload. I can't
+        # see a way (without calling importlib._bootstrap._find_spec, which
+        # should not be imported according to the note at the top of the
+        # module) to pass this information on. Hence, lets skip tracking in
+        # this case.
+        if target is not None:  # pragma: no cover
+            return None
+
+        # We use importlib to find the actual spec, so we need to avoid
+        # recursing when this finder is called again.
+        if fullname in self._avoid_recursion:
+            return None
+
+        # Find the spec.
+        self._avoid_recursion.add(fullname)
+        spec = importlib.util._find_spec_from_path(fullname, path)
+        self._avoid_recursion.remove(fullname)
+
+        # If it has an origin in one of our tracked dirs, log it.
+        if spec is not None and spec.origin is not None:
+            global _config
+            if _config.in_tracking_dir("import", spec.origin):
+                _file_tracker.filenames.add(("r", _relative_if_subdir(spec.origin)))
+
+        # And return the result.
+        return spec
+
+
 def _install_standard_file_trackers():
     """Internal: install standard file trackers in likely locations.
 
@@ -531,6 +574,7 @@ def _install_standard_file_trackers():
     import io
     builtins.open = _file_tracker(builtins.open)
     io.open = _file_tracker(io.open)
+    sys.meta_path.insert(0, ImportTracker())
 
 
 def _install_extra_file_trackers(trackers):
@@ -722,7 +766,7 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     # https://github.com/matplotlib/matplotlib/pull/12805
     try:
         from matplotlib.rcsetup import _validate_tex_preamble
-    except ImportError:
+    except ImportError:  # pragma: no cover
         matplotlib.rcParams.validate['pgf.preamble'] = str.splitlines
 
     # Specify which TeX engine we are using.

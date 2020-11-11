@@ -241,6 +241,19 @@ pythonpath =
   /usr/share/myotherlib
 ```
 
+Python imports can also be handled by the [file tracking](file_tracking.md). If
+enabled, any library imported from a directory (or subdirectory) specified in
+the `pythonpath` option is treated as a dependency and output as part of the
+file tracking details. If you have other libraries which are already in the
+Python path which you want to be tracked as dependencies, you can add the
+appropriate directories to the `extra_imports` option:
+
+```INI
+[paths]
+extra_imports =
+   /home/username/.local/lib/
+```
+
 
 Matplotlib rcParams
 -------------------

@@ -498,3 +498,39 @@ class TestTrackingClass:
         expected = {"r:mftest0.nc", "r:mftest1.nc", "r:mftest2.nc", "r:pgfutils.cfg"}
         assert actual == expected
         self.cleanup()
+
+
+    def test_import_tracking_pythonpath(self):
+        """File tracking handles imports from paths.pythonpath..."""
+        libdir = os.path.abspath(os.path.join(dirname, "imports", "lib"))
+        res = build_figure(
+            os.path.join(dirname, "imports", "cfg_pythonpath"),
+            "figure.py",
+            {"PGFUTILS_TRACK_FILES": "1"}
+        )
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        expected = {
+            "r:pgfutils.cfg",
+            "r:{}".format(os.path.join(libdir, "custom_lib.py"))
+        }
+        assert actual == expected
+        self.cleanup()
+
+
+    def test_import_tracking_extra_imports(self):
+        """File tracking handles imports from paths.extra_imports..."""
+        libdir = os.path.abspath(os.path.join(dirname, "imports", "lib"))
+        res = build_figure(
+            os.path.join(dirname, "imports", "cfg_extra"),
+            "figure.py",
+            {"PGFUTILS_TRACK_FILES": "1", "PYTHONPATH": libdir}
+        )
+        assert res.returncode == 0
+        actual = set(res.stdout.strip().splitlines())
+        expected = {
+            "r:pgfutils.cfg",
+            "r:{}".format(os.path.join(libdir, "custom_lib.py"))
+        }
+        assert actual == expected
+        self.cleanup()
