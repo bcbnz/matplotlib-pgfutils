@@ -335,6 +335,41 @@ class PgfutilsParser(configparser.ConfigParser):
         raise ColorError("{}.{}: could not interpret '{}' as a color.".format(section, option, value))
 
 
+    def in_tracking_dir(self, type, fn):
+        """Check if a file is in a tracking directory.
+
+        Parameters
+        ----------
+        type : {"dependency"}
+            The type of file to check for.
+        fn : path-like
+            The filename to check.
+
+        Returns
+        -------
+        Boolean
+            True if the file is in one of the corresponding tracking
+            directories specified in the configuration.
+
+        """
+        if type == "dependency":
+            paths = self.get("paths", "dependencies").strip().splitlines()
+        else:
+            raise ValueError("Unknown tracking type {0:s}.".format(type))
+
+        # If the filename relative to one of these paths does not have to leave
+        # the directory (i.e., doesn't start with ..) then it must be within
+        # the directory.
+        fn = os.path.abspath(fn)
+        for path in paths:
+            path = os.path.abspath(path)
+            if not os.path.relpath(fn, path).startswith(".."):
+                return True
+
+        # Not in any of the directories.
+        return False
+
+
 # The current configuration.
 _config = PgfutilsParser()
 
@@ -374,6 +409,7 @@ def _config_reset():
         },
 
         'paths': {
+            'dependencies': '.',
             'pythonpath': '',
         },
 
@@ -385,6 +421,27 @@ def _config_reset():
             'tikzpicture': 'false',
         }
     })
+
+
+def _relative_if_subdir(fn):
+    """Internal: get a relative or absolute path as appropriate.
+
+    Parameters
+    ----------
+    fn : path-like
+        A path to convert.
+
+    Returns
+    -------
+    fn : str
+        A relative path if the file is underneath the top-level project
+        directory, or an absolute path otherwise.
+
+    """
+    rel = os.path.relpath(fn)
+    if rel.startswith(".."):
+        return os.path.abspath(fn)
+    return rel
 
 
 def _file_tracker(to_wrap):
@@ -412,6 +469,8 @@ def _file_tracker(to_wrap):
     Wrapper function.
 
     """
+    global _config
+
     import functools
     @functools.wraps(to_wrap)
     def wrapper(*args, **kwargs):
@@ -431,21 +490,17 @@ def _file_tracker(to_wrap):
         if isinstance(file.name, int):
             return file
 
-        # Everything we are interested in is within the project tree.
-        relname = os.path.relpath(file.name)
-        if relname.startswith('.'):
-            return file
-
-        # If a file is writeable.
+        # If a file is writeable; this includes files opened in r+ or append
+        # modes. We assume these can't be dependencies.
         if file.writable():
             # Does it match the filename pattern used by the PGF backend for
             # rasterised parts of the image being saved as PNGs?
-            if re.match(r"^.+-img\d+.png$", relname):
-                _file_tracker.filenames.add(("w", relname))
+            if re.match(r"^.+-img\d+.png$", file.name):
+                _file_tracker.filenames.add(("w", _relative_if_subdir(file.name)))
 
-        # Assume files that are read are dependencies.
-        elif file.readable():
-            _file_tracker.filenames.add(("r", relname))
+        # Should always be True but just in case.
+        elif file.readable() and _config.in_tracking_dir("dependency", file.name):
+            _file_tracker.filenames.add(("r", _relative_if_subdir(file.name)))
 
         # Done.
         return file

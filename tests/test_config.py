@@ -104,3 +104,10 @@ class TestConfigClass:
         with pytest.raises(DimensionError):
             _config.read_kwargs(text_width="-1.2cm")
             _config['tex'].getdimension('text_width')
+
+
+    def test_unknown_tracking_type(self):
+        """Unknown tracking types are rejected..."""
+        _config_reset()
+        with pytest.raises(ValueError):
+            _config.in_tracking_dir("unknown", "file.txt")

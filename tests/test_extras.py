@@ -8,10 +8,15 @@ class TestExtrasClass:
         _config_reset()
 
         # Helper function to convert a config object to a dictionary.
+        # This also strips leading/trailing whitespace in the paths section as
+        # all options can take multiline values.
         def to_dict(cfg):
             result = {}
             for section in cfg.sections():
-                result[section] = dict(cfg[section])
+                conv = dict(cfg[section])
+                if section == "paths":
+                    conv = {k: v.strip() for k, v in conv.items()}
+                result[section] = conv
             return result
 
         # Read the config file in extras/.

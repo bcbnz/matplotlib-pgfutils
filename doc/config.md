@@ -206,6 +206,20 @@ See the [file tracking](file_tracking.md) documentation for more details.
 Path settings
 -------------
 
+The [file tracking](file_tracking.md) code checks any file opened for reading
+only to see if it is a dependency. If it is in one of the directories given
+under the `dependencies` keys, or in any subdirectory of one of these
+directories, then it is counted as a dependency. The default value only contains
+the top-level directory (`.`). Multiple entries must be specified on separate
+lines of the configuration.
+
+```INI
+[paths]
+dependencies =
+  .
+  /data/common
+```
+
 If you have Python code in other libraries you want to be able to import in
 your scripts, you can use the `pythonpath` option in the `paths` section of the
 configuration file to specify custom search paths for Python. This is a

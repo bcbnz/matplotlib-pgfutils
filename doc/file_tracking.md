@@ -12,15 +12,30 @@ interpreted as a filename, and the list written to that file.
 
 The tracked files are output in the format `mode:filename`, where mode is `r`
 for files that were read (dependencies) and `w` for files that were written
-(generated files). Only files in or below the current directory will be
-included in the list, and all filenames are relative to the current directory.
-Note that the read files will include the `pgfutils.cfg` file if it exists, and
-that the written files will *not* include the final PGF figure (typically, the
+(generated files). If the file is underneath the top-level project directory,
+the filename will be relative. If it is outside the project directory, it will
+be an absolute filename.  For an example of using this file tracking in a build
+system, see the [latexmk integration](latexmk.md) documentation.
+
+
+Dependencies
+------------
+
+Any file which is opened for reading only is treated as a possible dependency.
+Each of these files is checked to see if it is in one of the directories
+specified in the `dependencies` key of the `[paths]` section of [the
+configuration](config.md), or in a sub-directory of one of those directories.
+If so, it is counted as a dependency. Note that this will include the
+`pgfutils.cfg` configuration file if it exists (assuming the top-level
+directory has not been removed from the list of dependency paths).
+
+
+Generated files
+---------------
+
+The generated files will *not* include the final PGF figure (typically, the
 only written files that are reported are any rasterised images that are
 included in the figure).
-
-For an example of using this file tracking in a build system, see the [latexmk
-integration](latexmk.md) documentation.
 
 
 Automatic tracking

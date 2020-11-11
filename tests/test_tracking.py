@@ -236,6 +236,77 @@ class TestTrackingClass:
         self.cleanup()
 
 
+    def test_extradirs_stdout(self):
+        """File tracking to stdout with extra dependency directories."""
+        # Run the script.
+        extra_dir = os.path.join(dirname, "extra_dirs")
+        res = build_figure(extra_dir, 'multi.py', {'PGFUTILS_TRACK_FILES': '1'})
+        assert res.returncode == 0
+
+        # Check the results are as expected.
+        absdir = os.path.abspath(dirname)
+        expected = {
+            'r:pgfutils.cfg',
+            'r:{0:s}'.format(os.path.join(absdir, 'noise.npy')),
+            'r:scatter.csv',
+            'r:../../extra.file',
+            'w:multi-img0.png',
+            'w:multi-img1.png',
+        }
+        actual = set(res.stdout.strip().splitlines())
+        assert actual == expected
+
+        self.cleanup()
+
+
+    def test_extradirs_stderr(self):
+        """File tracking to stderr with extra dependency directories."""
+        # Run the script.
+        extra_dir = os.path.join(dirname, "extra_dirs")
+        res = build_figure(extra_dir, 'multi.py', {'PGFUTILS_TRACK_FILES': '2'})
+        assert res.returncode == 0
+
+        # Check the results are as expected.
+        absdir = os.path.abspath(dirname)
+        expected = {
+            'r:pgfutils.cfg',
+            'r:{0:s}'.format(os.path.join(absdir, 'noise.npy')),
+            'r:scatter.csv',
+            'r:../../extra.file',
+            'w:multi-img0.png',
+            'w:multi-img1.png',
+        }
+        actual = set(res.stderr.strip().splitlines())
+        assert actual == expected
+
+        self.cleanup()
+
+
+    def test_extradirs_file(self):
+        """File tracking to file with extra dependency directories."""
+        # Run the script.
+        extra_dir = os.path.join(dirname, "extra_dirs")
+        tfn = os.path.join(extra_dir, 'tracking.test.results')
+        res = build_figure(extra_dir, 'multi.py', {'PGFUTILS_TRACK_FILES': tfn})
+        assert res.returncode == 0
+
+        # Check the results are as expected.
+        absdir = os.path.abspath(dirname)
+        expected = {
+            'r:pgfutils.cfg',
+            'r:{0:s}'.format(os.path.join(absdir, 'noise.npy')),
+            'r:scatter.csv',
+            'r:../../extra.file',
+            'w:multi-img0.png',
+            'w:multi-img1.png',
+        }
+        with open(tfn, 'r') as f:
+            actual = set(f.read().strip().splitlines())
+        assert actual == expected
+
+        self.cleanup()
+
+
     def test_ignore_non_image_binary(self):
         """File tracking ignores non-image binary written files..."""
         # Run the script.
