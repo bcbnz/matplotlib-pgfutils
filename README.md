@@ -24,7 +24,7 @@ setup_figure(width=0.9, height=0.4)
 import numpy as np
 from matplotlib import pyplot as plt
 
-# Generate square wave from a few terms of its Fourier series.
+# Generate a square wave from a few terms of its Fourier series.
 f = 3
 t = np.linspace(0, 1, 501)
 square = np.zeros(t.shape)
@@ -51,7 +51,7 @@ plt.ylabel("Amplitude (V)")
 save()
 ```
 
-[1]: https://sourceforge.net/projects/pgf/
+[1]: https://github.com/pgf-tikz/pgf
 [2]: https://matplotlib.org/
 
 
@@ -59,7 +59,7 @@ Requirements
 ------------
 
 Using pgfutils requires Python 3. Each commit is currently tested with release
-versions of Python 3.6 and 3.7, as well as a development version of Python 3.8.
+versions of Python 3.6, 3.7, 3.8 and 3.9.
 
 The only external dependency is matplotlib. All the other dependencies are part
 of the standard Python library.
