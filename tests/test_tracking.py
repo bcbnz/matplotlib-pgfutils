@@ -534,3 +534,23 @@ class TestTrackingClass:
         }
         assert actual == expected
         self.cleanup()
+
+
+    def test_track_enabled_config(self):
+        """File tracking can be enabled through configured environment variables..."""
+        # Run the script.
+        res = build_figure(os.path.join(dirname, "config_enabled"), 'config_enabled.py')
+        assert res.returncode == 0
+
+        # Check the results are as expected.
+        expected = {
+            'r:pgfutils.cfg',
+            'r:noise.npy',
+            'r:scatter.csv',
+            'r:extra.file',
+            'w:config_enabled-img0.png',
+            'w:config_enabled-img1.png',
+        }
+        actual = set(res.stdout.strip().splitlines())
+        assert actual == expected
+        self.cleanup()

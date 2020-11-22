@@ -36,7 +36,7 @@ consistent-looking plots.
 
 """
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
 # caches a reference to the io.open() method as part of its data loading
@@ -410,6 +410,7 @@ def _config_reset():
             'figure_background': '',
             'axes_background': 'white',
             'extra_tracking': '',
+            'environment': '',
         },
 
         'paths': {
@@ -705,24 +706,39 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     """
     global _config, _interactive
 
-    # Need to install our file trackers (if desired)
-    # before we import Matplotlib.
-    if 'PGFUTILS_TRACK_FILES' in os.environ:
-        _install_standard_file_trackers()
-
     # Reset the configuration.
     _config_reset()
 
     # Load configuration from a local file if one exists.
     if os.path.exists('pgfutils.cfg'):
         _config.read('pgfutils.cfg')
+        _file_tracker.filenames.add(("r", "pgfutils.cfg"))
 
     # And anything given in the function call.
     if kwargs:
         _config.read_kwargs(**kwargs)
 
-    # Now we can add any extra trackers specified in the config.
+    # Set environment variables specified in the configuration.
+    for line in _config['pgfutils']['environment'].splitlines():
+        line = line.strip()
+        if not line:
+            continue
+
+        # Check the variables are formatted correctly.
+        if '=' not in line:
+            raise ValueError(
+                "Environment variables should be in the form NAME=VALUE. "
+                "The line '{}' does not match this.".format(line)
+            )
+
+        # And set them.
+        key, value = line.split("=", 1)
+        os.environ[key.strip()] = value.strip()
+
+    # Install file trackers if desired. This must be done before anything which
+    # imports Matplotlib.
     if 'PGFUTILS_TRACK_FILES' in os.environ:
+        _install_standard_file_trackers()
         extra = _config['pgfutils']['extra_tracking'].strip()
         if extra:
             _install_extra_file_trackers(extra.split(","))

@@ -203,6 +203,48 @@ This is a comma-separated list of extra libraries to install file tracking on.
 See the [file tracking](file_tracking.md) documentation for more details.
 
 
+### Environment variables
+
+Environment variables to set can be specified using the multi-line option
+``environment``. Each line represents one environment variable in the format
+``name = value``:
+
+```INI
+[pgfutils]
+environment =
+  name1 = value1
+  name2 = value2
+```
+
+All names and values are processed and set as strings; any leading or trailing
+spaces around the names or values will be stripped. Existing environment
+variables of the same name will be overwritten. This means that if you specify
+the same variable multiple times the last value will be used. For example, the
+configuration
+
+```INI
+[pgfutils]
+environment =
+  name1 = value1
+  name2 = value2
+  name1 = value3
+```
+
+will result in ``name1`` being set to ``value3``. The variables are set during
+the call to ``setup_figure()``, so any libraries that read the environment
+variables must be imported after this call.
+
+Note that the ``PGFUTILS_TRACK_FILES`` variable described in the [file tracking
+documentation](file_tracking.md) can be configured through this option, for
+example to output tracked files to stdout:
+
+```INI
+[pgfutils]
+environment =
+  PGFUTILS_TRACK_FILES = 1
+```
+
+
 Path settings
 -------------
 
