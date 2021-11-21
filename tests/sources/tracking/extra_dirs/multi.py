@@ -9,7 +9,7 @@ noise = np.load('../noise.npy')
 plt.imshow(noise)
 plt.colorbar()
 
-data = np.loadtxt('scatter.csv', delimiter=',', dtype=np.int)
+data = np.loadtxt('scatter.csv', delimiter=',', dtype=int)
 
 x = data[:, :3]
 y = data[:, 3:]
