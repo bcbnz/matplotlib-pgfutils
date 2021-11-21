@@ -1,4 +1,4 @@
-# Copyright 2018, 2019, 2020 Blair Bonnett
+# Copyright 2018, 2019, 2020, 2021 Blair Bonnett
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -36,7 +36,7 @@ consistent-looking plots.
 
 """
 
-__version__ = "1.5.0"
+__version__ = "1.6.0-alpha0"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
 # caches a reference to the io.open() method as part of its data loading
@@ -48,7 +48,7 @@ __version__ = "1.5.0"
 # different functions.
 
 import configparser
-import importlib
+import importlib.abc
 import inspect
 import io
 import os
