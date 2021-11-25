@@ -50,3 +50,6 @@ MANIFEST
 # Pytest coverage files.
 .coverage
 htmlcov/
+
+# Environment file for local GitHub action testing.
+.env

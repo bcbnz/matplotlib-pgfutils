@@ -1,0 +1,4 @@
+libgeos-dev
+libproj-dev
+proj-bin
+texlive-xetex
