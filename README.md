@@ -95,18 +95,18 @@ An example configuration file showing the default settings is given in
 Unit testing
 ------------
 
-[![Build Status](https://travis-ci.com/bcbnz/matplotlib-pgfutils.svg?branch=master)](https://travis-ci.com/bcbnz/matplotlib-pgfutils)
+[![Test Status](https://github.com/bcbnz/matplotlib-pgfutils/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/bcbnz/matplotlib-pgfutils/actions/workflows/ci-tests.yml)
 [![codecov](https://codecov.io/gh/bcbnz/matplotlib-pgfutils/branch/master/graph/badge.svg)](https://codecov.io/gh/bcbnz/matplotlib-pgfutils)
 
 Extensive unit tests are included in the tests/ directory of the source. Each
-commit to the source repository is automatically tested thanks to [Travis
-CI][4]. The test coverage (that is, how many of the lines of code in the source
-were executed during the tests) is monitored by [Codecov][5]. The badges above
-show the status of the last commit made to the source.
+commit to the source repository is automatically tested using GitHub actions.
+The test coverage (that is, how many of the lines of code in the source were
+executed during the tests) is monitored by [Codecov][4]. The badges above show
+the status of the last commit made to the source.
 
 You can also run the tests on a local copy of the code. They are designed to be
-run with the [pytest][6] framework and employ the [Coverage.py][7] package via
-the [pytest-cov][8] plugin to measure the coverage. If you have these packages
+run with the [pytest][5] framework and employ the [Coverage.py][6] package via
+the [pytest-cov][7] plugin to measure the coverage. If you have these packages
 installed, run `pytest` from the top-level directory to execute the tests. A
 basic test coverage report will be printed on the terminal, and the full report
 can be viewed by opening the `htmlcov/index.html` file in your web browser.
@@ -129,8 +129,7 @@ https://github.com/sebsan/Cotham
 [1]: https://github.com/pgf-tikz/pgf
 [2]: https://matplotlib.org/
 [3]: https://numpy.org/neps/nep-0029-deprecation_policy.html
-[4]: https://travis-ci.com/bcbnz/matplotlib-pgfutils
-[5]: https://codecov.io/gh/bcbnz/matplotlib-pgfutils
-[6]: https://pytest.org/
-[7]: https://coverage.readthedocs.io/
-[8]: https://pytest-cov.readthedocs.io/
+[4]: https://codecov.io/gh/bcbnz/matplotlib-pgfutils
+[5]: https://pytest.org/
+[6]: https://coverage.readthedocs.io/
+[7]: https://pytest-cov.readthedocs.io/
