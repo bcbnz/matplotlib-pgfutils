@@ -32,8 +32,8 @@ jobs:
 
       - name: Install system libraries
         run: |
-          apt update
-          xargs -a .github/workflows/requirements-test-apt.txt apt install -y
+          sudo apt update
+          xargs -a .github/workflows/requirements-test-apt.txt sudo apt install -y
 
       - name: Install test environment
         run: |
