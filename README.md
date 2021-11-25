@@ -51,18 +51,16 @@ plt.ylabel("Amplitude (V)")
 save()
 ```
 
-[1]: https://github.com/pgf-tikz/pgf
-[2]: https://matplotlib.org/
-
-
 Requirements
 ------------
 
-Using pgfutils requires Python 3. Each commit is currently tested with release
-versions of Python 3.6, 3.7, 3.8 and 3.9.
+pgfutils follows [NEP29][3] when determining supported Python versions. Any
+minor version of Python released within the 42 months prior to a pgfutils
+release is supported.
 
-The only external dependency is matplotlib. All the other dependencies are part
-of the standard Python library.
+The only required external dependency is Matplotlib. Any minor version of
+Matplotlib released within the 24 months prior to a pgfutils release is
+supported.
 
 
 Examples
@@ -102,22 +100,16 @@ Unit testing
 
 Extensive unit tests are included in the tests/ directory of the source. Each
 commit to the source repository is automatically tested thanks to [Travis
-CI][3]. The test coverage (that is, how many of the lines of code in the source
-were executed during the tests) is monitored by [Codecov][4]. The badges above
+CI][4]. The test coverage (that is, how many of the lines of code in the source
+were executed during the tests) is monitored by [Codecov][5]. The badges above
 show the status of the last commit made to the source.
 
 You can also run the tests on a local copy of the code. They are designed to be
-run with the [pytest][5] framework and employ the [Coverage.py][6] package via
-the [pytest-cov][7] plugin to measure the coverage. If you have these packages
+run with the [pytest][6] framework and employ the [Coverage.py][7] package via
+the [pytest-cov][8] plugin to measure the coverage. If you have these packages
 installed, run `pytest` from the top-level directory to execute the tests. A
 basic test coverage report will be printed on the terminal, and the full report
 can be viewed by opening the `htmlcov/index.html` file in your web browser.
-
-[3]: https://travis-ci.com/bcbnz/matplotlib-pgfutils
-[4]: https://codecov.io/gh/bcbnz/matplotlib-pgfutils
-[5]: https://pytest.org/
-[6]: https://coverage.readthedocs.io/
-[7]: https://pytest-cov.readthedocs.io/
 
 
 License
@@ -132,3 +124,13 @@ Sanfilippo and is licensed under the SIL Open Font License, Version 1.1. The
 license can be found in the source at tests/sources/fonts/Cotham/OFL.txt or
 online at https://scripts.sil.org/OFL and the font itself can be found at
 https://github.com/sebsan/Cotham
+
+
+[1]: https://github.com/pgf-tikz/pgf
+[2]: https://matplotlib.org/
+[3]: https://numpy.org/neps/nep-0029-deprecation_policy.html
+[4]: https://travis-ci.com/bcbnz/matplotlib-pgfutils
+[5]: https://codecov.io/gh/bcbnz/matplotlib-pgfutils
+[6]: https://pytest.org/
+[7]: https://coverage.readthedocs.io/
+[8]: https://pytest-cov.readthedocs.io/
