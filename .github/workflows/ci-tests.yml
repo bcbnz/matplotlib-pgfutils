@@ -17,10 +17,6 @@ jobs:
         python-version: [ "3.7", "3.10" ]
         matplotlib-version: [ "3.1.3", "3.5.0" ]
 
-    env:
-      Python: ${{ matrix.python-version}}
-      Matplotlib: ${{ matrix.matplotlib-version }}
-
     steps:
       - uses: actions/checkout@v2
 
@@ -46,4 +42,4 @@ jobs:
         uses: codecov/codecov-action@v2.1.0
         with:
           files: coverage.xml
-          env_vars: Python,Matplotlib
+          flags: "Matplotlib-${{ matrix.matplotlib-version}}-Python-${{ matrix.python-version }}"
