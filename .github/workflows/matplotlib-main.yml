@@ -2,7 +2,7 @@ name: Run tests against Matplotlib main branch
 
 on:
   schedule:
-    -cron: "18 2 * * 6"
+    - cron: "18 2 * * 6"
   workflow_dispatch:
 
 jobs:
