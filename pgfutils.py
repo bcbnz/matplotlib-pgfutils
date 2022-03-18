@@ -1,4 +1,4 @@
-# Copyright 2018, 2019, 2020, 2021 Blair Bonnett
+# Copyright 2018, 2019, 2020, 2021, 2022 Blair Bonnett
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -36,7 +36,7 @@ consistent-looking plots.
 
 """
 
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
 # caches a reference to the io.open() method as part of its data loading
@@ -53,6 +53,7 @@ import inspect
 import io
 import os
 import os.path
+import pathlib
 import re
 import string
 import sys
@@ -575,6 +576,8 @@ def _install_standard_file_trackers():
     import io
     builtins.open = _file_tracker(builtins.open)
     io.open = _file_tracker(io.open)
+    if hasattr(pathlib, "_normal_accessor"):
+        pathlib._normal_accessor.open = _file_tracker(pathlib._normal_accessor.open)
     sys.meta_path.insert(0, ImportTracker())
 
 

@@ -133,6 +133,47 @@ class TestTrackingClass:
         self.cleanup()
 
 
+    def test_pathlib_stdout(self):
+        """File tracking to stdout with pathlib dependency..."""
+        # Run the script.
+        res = build_figure(dirname, 'dependency_pathlib.py', {'PGFUTILS_TRACK_FILES': '1'})
+        assert res.returncode == 0
+
+        # Check the expected dependency filename is reported.
+        fn = 'scatter.csv'
+        assert res.stdout.strip() == 'r:' + fn
+
+        self.cleanup()
+
+
+    def test_pathlib_stderr(self):
+        """File tracking to stderr with pathlib dependency..."""
+        # Run the script.
+        res = build_figure(dirname, 'dependency_pathlib.py', {'PGFUTILS_TRACK_FILES': '2'})
+        assert res.returncode == 0
+
+        # Check the expected dependency filename is reported.
+        fn = 'scatter.csv'
+        assert res.stderr.strip() == 'r:' + fn
+
+        self.cleanup()
+
+
+    def test_pathlib_file(self):
+        """File tracking to file with pathlib dependency..."""
+        # Run the script.
+        tfn = os.path.join(dirname, 'tracking.test.results')
+        res = build_figure(dirname, 'dependency_pathlib.py', {'PGFUTILS_TRACK_FILES': tfn})
+        assert res.returncode == 0
+
+        # Check the expected dependency filename is reported.
+        fn = 'scatter.csv'
+        with open(tfn, 'r') as f:
+            assert f.read().strip() == 'r:' + fn
+
+        self.cleanup()
+
+
     def test_load_stdout(self):
         """File tracking to stdout with NumPy format dependency..."""
         # Run the script.
