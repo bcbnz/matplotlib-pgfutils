@@ -1,5 +1,6 @@
 import os.path
-from pgfutils import _config, _config_reset, PgfutilsParser
+
+from pgfutils import PgfutilsParser, _config, _config_reset
 
 
 class TestExtrasClass:
@@ -23,10 +24,10 @@ class TestExtrasClass:
         # Note we use the base class read() method here to avoid some extra
         # error checking in our custom parser which gets in the way of this
         # test being accurately performed.
-        extras_dir = os.path.join(os.path.dirname(__file__), '..', 'extras')
+        extras_dir = os.path.join(os.path.dirname(__file__), "..", "extras")
         extras_dir = os.path.normpath(extras_dir)
         extras = PgfutilsParser()
-        super(PgfutilsParser, extras).read(os.path.join(extras_dir, 'pgfutils.cfg'))
+        super(PgfutilsParser, extras).read(os.path.join(extras_dir, "pgfutils.cfg"))
 
         # Compare to the default options.
         assert to_dict(extras) == to_dict(_config)

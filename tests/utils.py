@@ -1,6 +1,6 @@
-import subprocess
 import os
 import os.path
+import subprocess
 import sys
 
 
@@ -29,7 +29,7 @@ def build_figure(working_dir, filename, environment=None):
     env = dict(os.environ)
     paths = environment.pop("PYTHONPATH", "").split(":")
     paths.extend(os.path.normpath(p) for p in sys.path)
-    env['PYTHONPATH'] = ':'.join(paths)
+    env["PYTHONPATH"] = ":".join(paths)
     env.update(environment or {})
 
     # Move into the desired working directory.
@@ -37,9 +37,13 @@ def build_figure(working_dir, filename, environment=None):
     os.chdir(working_dir)
 
     # Run the script.
-    res = subprocess.run([sys.executable, filename],
-                         universal_newlines=True, env=env,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    res = subprocess.run(
+        [sys.executable, filename],
+        universal_newlines=True,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     sys.stdout.write(res.stdout)
     sys.stdout.flush()
     sys.stderr.write(res.stderr)
@@ -52,7 +56,7 @@ def build_figure(working_dir, filename, environment=None):
     return res
 
 
-def build_tex(working_dir, basename, tex='xelatex'):
+def build_tex(working_dir, basename, tex="xelatex"):
     """Attempt to build a PDF document from a TeX file.
 
     Parameters
@@ -77,8 +81,12 @@ def build_tex(working_dir, basename, tex='xelatex'):
     os.chdir(working_dir)
 
     # Run TeX.
-    res = subprocess.run([tex, basename], universal_newlines=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    res = subprocess.run(
+        [tex, basename],
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     sys.stdout.write(res.stdout)
     sys.stdout.flush()
     sys.stderr.write(res.stderr)
@@ -103,7 +111,7 @@ def clean_dir(dir):
     for root, dirs, files in os.walk(dir):
         for fn in files:
             base, ext = os.path.splitext(fn)
-            if ext in {'.pypgf', '.png', '.aux', '.log', '.pdf'}:
+            if ext in {".pypgf", ".png", ".aux", ".log", ".pdf"}:
                 os.unlink(os.path.join(root, fn))
-            if fn == 'tracking.test.results':
+            if fn == "tracking.test.results":
                 os.unlink(os.path.join(root, fn))

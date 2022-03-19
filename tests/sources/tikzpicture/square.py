@@ -1,9 +1,12 @@
 # Set up the figure environment.
-from pgfutils import setup_figure, save
+from pgfutils import save, setup_figure
+
+
 setup_figure(width=0.9, height=0.4)
 
-import numpy as np
 from matplotlib import pyplot as plt
+import numpy as np
+
 
 # Generate square wave from a few terms of its Fourier series.
 f = 3
@@ -13,7 +16,7 @@ for n in range(1, 12, 2):
     # Create this harmonic and plot it as a dashed
     # partially-transparent line.
     component = np.sin(2 * n * np.pi * f * t) / n
-    plt.plot(t, component, '--', alpha=0.4)
+    plt.plot(t, component, "--", alpha=0.4)
 
     # Add it to the overall signal.
     square += component
@@ -22,7 +25,7 @@ for n in range(1, 12, 2):
 square *= 4 / np.pi
 
 # Plot and label the figure.
-plt.plot(t, square, 'C0')
+plt.plot(t, square, "C0")
 plt.xlim(0, 1)
 plt.ylim(-1.2, 1.2)
 plt.xlabel("Time (s)")

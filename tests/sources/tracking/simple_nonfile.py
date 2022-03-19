@@ -1,10 +1,14 @@
-from pgfutils import setup_figure, save, _file_tracker
+from pgfutils import _file_tracker, save, setup_figure
+
+
 setup_figure(width=1, height=1)
 
-import numpy as np
-from matplotlib import pyplot as plt
 import base64
 import os
+
+from matplotlib import pyplot as plt
+import numpy as np
+
 
 t = np.linspace(0, 10, 201)
 s = np.sin(2 * np.pi * 0.5 * t)
@@ -14,7 +18,10 @@ s = np.sin(2 * np.pi * 0.5 * t)
 os.open = _file_tracker(os.open)
 
 fd = os.open("test_nonfile.png", os.O_WRONLY | os.O_CREAT)
-img = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=="
+img = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKg"
+    "AAAABJRU5ErkJggg=="
+)
 os.write(fd, base64.b64decode(img))
 os.close(fd)
 

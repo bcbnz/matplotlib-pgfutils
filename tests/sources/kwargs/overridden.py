@@ -1,3 +1,5 @@
-from pgfutils import setup_figure, save
-setup_figure(width=1, height=1, figure_background='red')
+from pgfutils import save, setup_figure
+
+
+setup_figure(width=1, height=1, figure_background="red")
 save()

@@ -1,51 +1,48 @@
 # Copyright 2018, 2019, 2020, 2021, 2022 Blair Bonnett
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Redistribution and use in source and binary forms, with or without modification, are
+# permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
+# 1. Redistributions of source code must retain the above copyright notice, this list of
+#    conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list
+#    of conditions and the following disclaimer in the documentation and/or other
+#    materials provided with the distribution.
 #
-# 3. Neither the name of the copyright holder nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be
+#    used to endorse or promote products derived from this software without specific
+#    prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+# SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+# WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+# DAMAGE.
 
 """Utilities for generating PGF plots from matplotlib.
 
-From version 1.2, matplotlib has included a PGF backend. This exports figures
-as drawing commands for the PGF drawing package for LaTeX, allowing LaTeX to
-typeset the image. This module provides some utilities to simplify creating PGF
-figures from scripts (so they can be processed via Makefiles) in order to get
-consistent-looking plots.
+From version 1.2, matplotlib has included a PGF backend. This exports figures as drawing
+commands for the PGF drawing package for LaTeX, allowing LaTeX to typeset the image.
+This module provides some utilities to simplify creating PGF figures from scripts (so
+they can be processed via Makefiles) in order to get consistent-looking plots.
 
 """
 
 __version__ = "1.8.0.dev0"
 
-# We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
-# caches a reference to the io.open() method as part of its data loading
-# functions. This means we can't (reliably) wrap all loading functions if we're
-# asked to track opened files. Instead, the tracking is installed in
-# setup_figure() before the first import of Matplotlib (assuming the user
-# doesn't use our internal functions). Python's caching of imported modules
-# means there should be minimal impact from importing Matplotlib separately in
-# different functions.
+# We don't import Matplotlib here as this brings in NumPy. In turn, NumPy caches a
+# reference to the io.open() method as part of its data loading functions. This means we
+# can't (reliably) wrap all loading functions if we're asked to track opened files.
+# Instead, the tracking is installed in setup_figure() before the first import of
+# Matplotlib (assuming the user doesn't use our internal functions). Python's caching of
+# imported modules means there should be minimal impact from importing Matplotlib
+# separately in different functions.
 
 import configparser
 import importlib.abc
@@ -61,55 +58,56 @@ import sys
 
 class DimensionError(Exception):
     """A configuration entry could not be converted to a dimension."""
+
     pass
 
 
 class ColorError(Exception):
     """A configuration entry could not be converted to a color."""
+
     pass
 
 
 class PgfutilsParser(configparser.ConfigParser):
-    """Custom configuration parser with Matplotlib dimension and color support.
+    """Custom configuration parser with Matplotlib dimension and color support."""
 
-    """
     # Regular expression to parse a dimension into size and (optional) unit.
     _dimre = re.compile(r"^\s*(?P<size>\d+(?:\.\d*)?)\s*(?P<unit>.+?)?\s*$")
 
     # Conversion factors (divisors) to go from the given unit to inches.
     _dimconv = {
-        'cm': 2.54,
-        'centimetre': 2.54,
-        'centimeter': 2.54,
-        'centimetres': 2.54,
-        'centimeters': 2.54,
-        'mm': 25.4,
-        'millimetre': 25.4,
-        'millimeter': 25.4,
-        'millimetres': 25.4,
-        'millimeters': 25.4,
-        'in': 1,
-        'inch': 1,
-        'inches': 1,
-        'pt': 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
-        'point': 72.27,
-        'points': 72.27,
+        "cm": 2.54,
+        "centimetre": 2.54,
+        "centimeter": 2.54,
+        "centimetres": 2.54,
+        "centimeters": 2.54,
+        "mm": 25.4,
+        "millimetre": 25.4,
+        "millimeter": 25.4,
+        "millimetres": 25.4,
+        "millimeters": 25.4,
+        "in": 1,
+        "inch": 1,
+        "inches": 1,
+        "pt": 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
+        "point": 72.27,
+        "points": 72.27,
     }
-
 
     def read(self, filename, encoding=None):
         """Read configuration options from a file.
 
-        This is an extension of the standard ConfigParser.read() method to
-        reject unknown options. This provides an early indication to the user
-        that they have configured something incorrectly, rather than continuing
-        and having their plot generated differently to how they intended it.
+        This is an extension of the standard ConfigParser.read() method to reject
+        unknown options. This provides an early indication to the user that they have
+        configured something incorrectly, rather than continuing and having their plot
+        generated differently to how they intended it.
 
         """
+
         def get_options():
             options = set()
             for sect, opts in self._sections.items():
-                if sect == 'rcParams':
+                if sect == "rcParams":
                     continue
                 options.update(f"{sect}.{opt}" for opt in opts.keys())
             return options
@@ -129,11 +127,8 @@ class PgfutilsParser(configparser.ConfigParser):
         # Otherwise we're OK to continue.
         return result
 
-
     def read_kwargs(self, **kwargs):
-        """Read configuration options from keyword arguments.
-
-        """
+        """Read configuration options from keyword arguments."""
         # Dictionary of values to load.
         d = {}
 
@@ -143,7 +138,7 @@ class PgfutilsParser(configparser.ConfigParser):
         # Go through all existing options.
         for section, options in self._sections.items():
             # Can't specify rcParams through kwargs.
-            if section == 'rcParams':
+            if section == "rcParams":
                 continue
 
             # Add to our tables.
@@ -164,14 +159,13 @@ class PgfutilsParser(configparser.ConfigParser):
         # And then read the dictionary in.
         return self.read_dict(d)
 
-
     def parsedimension(self, dim):
         """Convert a dimension to inches.
 
-        The dimension should be in the format '<value><unit>', where the unit
-        can be 'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is
-        assumed to be in inches. Note that points refer to TeX points (72.27
-        per inch) rather than Postscript points (72 per inch).
+        The dimension should be in the format '<value><unit>', where the unit can be
+        'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is assumed to be in
+        inches. Note that points refer to TeX points (72.27 per inch) rather than
+        Postscript points (72 per inch).
 
         Parameters
         ----------
@@ -204,8 +198,8 @@ class PgfutilsParser(configparser.ConfigParser):
 
         # Pull out the pieces.
         groups = m.groupdict()
-        size = float(groups['size'])
-        unit = groups.get('unit', '') or ''
+        size = float(groups["size"])
+        unit = groups.get("unit", "") or ""
         unit = unit.lower()
 
         # No unit: already in inches.
@@ -222,14 +216,13 @@ class PgfutilsParser(configparser.ConfigParser):
         # Do the conversion.
         return size / factor
 
-
     def getdimension(self, section, option, **kwargs):
         """Return a configuration entry as a dimension in inches.
 
-        The dimension should be in the format '<value><unit>', where the unit
-        can be 'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is
-        assumed to be in inches. Note that points refer to TeX points (72.27
-        per inch) rather than Postscript points (72 per inch).
+        The dimension should be in the format '<value><unit>', where the unit can be
+        'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is assumed to be in
+        inches. Note that points refer to TeX points (72.27 per inch) rather than
+        Postscript points (72 per inch).
 
         Parameters
         ----------
@@ -256,17 +249,15 @@ class PgfutilsParser(configparser.ConfigParser):
         except DimensionError as e:
             raise DimensionError(f"{section}.{option}: {e}") from None
 
-
     def getcolor(self, section, option, **kwargs):
         """Return a configuration entry as a Matplotlib color.
 
         Recognised color formats are:
             * Named colors (red, yellow, etc.)
             * Cycle colors (C1, C2 etc.)
-            * Tuples (r, g, b) or (r, g, b, a) with floating-point entries in
-              [0, 1]
+            * Tuples (r, g, b) or (r, g, b, a) with floating-point entries in [0, 1]
             * A floating-point value in [0, 1] for grayscale
-            * 'none', 'transparent', or an empty value for transparent.
+            * 'none', 'transparent', or an empty value for transparent
 
         Parameters
         ----------
@@ -286,11 +277,11 @@ class PgfutilsParser(configparser.ConfigParser):
         import matplotlib
 
         # Retrieve the string value. Empty values are interpreted as none.
-        value = self.get(section, option, **kwargs).strip() or 'none'
+        value = self.get(section, option, **kwargs).strip() or "none"
 
         # Transparent.
-        if value in {'none', 'transparent'}:
-            return 'none'
+        if value in {"none", "transparent"}:
+            return "none"
 
         # Single floating point number: grayscale.
         try:
@@ -300,28 +291,36 @@ class PgfutilsParser(configparser.ConfigParser):
         else:
             # For historical reasons Matlotlib requires this to be a string.
             if not (0 <= gray <= 1):
-                raise ColorError(f"{section}.{option}: greyscale floats must be in [0, 1].")
+                raise ColorError(
+                    f"{section}.{option}: greyscale floats must be in [0, 1]."
+                )
             return value
 
-        # Nth color in the cycle (i.e., C1, C2 etc), or a named color.
-        # Unfortunately, this returns True for grayscale values outside [0, 1]
-        # so we have to do our own check above.
+        # Nth color in the cycle (i.e., C1, C2 etc), or a named color. Unfortunately,
+        # this returns True for grayscale values outside [0, 1] so we have to do our own
+        # check above.
         if matplotlib.colors.is_color_like(value):
             return value
 
         # Tuple or list.
-        if (value[0] == '(' and value[-1] == ')') or (value[0] == '[' and value[-1] == ']'):
-            entries = value[1:-1].split(',')
+        if (value[0] == "(" and value[-1] == ")") or (
+            value[0] == "[" and value[-1] == "]"
+        ):
+            entries = value[1:-1].split(",")
 
             # Can be RGB or RGBA.
             if not (2 < len(entries) < 5):
-                raise ColorError(f"{section}.{option}: RGBA colors must have 3 or 4 entries.")
+                raise ColorError(
+                    f"{section}.{option}: RGBA colors must have 3 or 4 entries."
+                )
 
             # Attempt to convert to floats.
             try:
                 float_entries = tuple(map(float, entries))
             except ValueError:
-                raise ColorError(f"{section}.{option}: RGBA colors must be floating point.") from None
+                raise ColorError(
+                    f"{section}.{option}: RGBA colors must be floating point."
+                ) from None
 
             # And get Matplotlib to convert to a color.
             try:
@@ -333,8 +332,9 @@ class PgfutilsParser(configparser.ConfigParser):
             return rgba
 
         # Not a format we know.
-        raise ColorError(f"{section}.{option}: could not interpret '{value}' as a color.")
-
+        raise ColorError(
+            f"{section}.{option}: could not interpret '{value}' as a color."
+        )
 
     def in_tracking_dir(self, type, fn):
         """Check if a file is in a tracking directory.
@@ -349,8 +349,8 @@ class PgfutilsParser(configparser.ConfigParser):
         Returns
         -------
         Boolean
-            True if the file is in one of the corresponding tracking
-            directories specified in the configuration.
+            True if the file is in one of the corresponding tracking directories
+            specified in the configuration.
 
         """
         if type == "data":
@@ -361,9 +361,8 @@ class PgfutilsParser(configparser.ConfigParser):
         else:
             raise ValueError(f"Unknown tracking type {type}.")
 
-        # If the filename relative to one of these paths does not have to leave
-        # the directory (i.e., doesn't start with ..) then it must be within
-        # the directory.
+        # If the filename relative to one of these paths does not have to leave the
+        # directory (i.e., doesn't start with ..) then it must be within the directory.
         fn = os.path.abspath(fn)
         for path in paths:
             path = os.path.abspath(path)
@@ -377,56 +376,52 @@ class PgfutilsParser(configparser.ConfigParser):
 # The current configuration.
 _config = PgfutilsParser()
 
-def _config_reset():
-    """Internal: reset the configuration to the default state.
 
-    """
+def _config_reset():
+    """Internal: reset the configuration to the default state."""
     global _config
     _config.clear()
-    _config.read_dict({
-        'tex': {
-            'engine': 'xelatex',
-            'text_width': '345 points',
-            'text_height': '550 points',
-            'marginpar_width': '65 points',
-            'marginpar_sep': '11 points',
-            'num_columns': '1',
-            'columnsep': '10 points',
-        },
-
-        'pgfutils': {
-            'preamble': '',
-            'preamble_substitute': 'false',
-            'font_family': 'serif',
-            'font_name': '',
-            'font_size': '10',
-            'legend_font_size': '10',
-            'line_width': '1',
-            'axes_line_width': '0.6',
-            'legend_border_width': '0.6',
-            'legend_border_color': '(0.8, 0.8, 0.8)',
-            'legend_background': '(1, 1, 1)',
-            'legend_opacity': 0.8,
-            'figure_background': '',
-            'axes_background': 'white',
-            'extra_tracking': '',
-            'environment': '',
-        },
-
-        'paths': {
-            'data': '.',
-            'pythonpath': '',
-            'extra_imports': '',
-        },
-
-        'rcParams': {
-        },
-
-        'postprocessing': {
-            'fix_raster_paths': 'true',
-            'tikzpicture': 'false',
+    _config.read_dict(
+        {
+            "tex": {
+                "engine": "xelatex",
+                "text_width": "345 points",
+                "text_height": "550 points",
+                "marginpar_width": "65 points",
+                "marginpar_sep": "11 points",
+                "num_columns": "1",
+                "columnsep": "10 points",
+            },
+            "pgfutils": {
+                "preamble": "",
+                "preamble_substitute": "false",
+                "font_family": "serif",
+                "font_name": "",
+                "font_size": "10",
+                "legend_font_size": "10",
+                "line_width": "1",
+                "axes_line_width": "0.6",
+                "legend_border_width": "0.6",
+                "legend_border_color": "(0.8, 0.8, 0.8)",
+                "legend_background": "(1, 1, 1)",
+                "legend_opacity": 0.8,
+                "figure_background": "",
+                "axes_background": "white",
+                "extra_tracking": "",
+                "environment": "",
+            },
+            "paths": {
+                "data": ".",
+                "pythonpath": "",
+                "extra_imports": "",
+            },
+            "rcParams": {},
+            "postprocessing": {
+                "fix_raster_paths": "true",
+                "tikzpicture": "false",
+            },
         }
-    })
+    )
 
 
 def _relative_if_subdir(fn):
@@ -440,8 +435,8 @@ def _relative_if_subdir(fn):
     Returns
     -------
     fn : str
-        A relative path if the file is underneath the top-level project
-        directory, or an absolute path otherwise.
+        A relative path if the file is underneath the top-level project directory, or an
+        absolute path otherwise.
 
     """
     rel = os.path.relpath(fn)
@@ -453,17 +448,15 @@ def _relative_if_subdir(fn):
 def _file_tracker(to_wrap):
     """Internal: install an opened file tracker.
 
-    To be trackable, the given callable should return an instance of a subclass
-    of `io.IOBase`. If its `writable` method returns True, it is assumed to be
-    an output file, otherwise if its `readable` method returns True it is
-    assumed to be an input.
+    To be trackable, the given callable should return an instance of a subclass of
+    `io.IOBase`. If its `writable` method returns True, it is assumed to be an output
+    file, otherwise if its `readable` method returns True it is assumed to be an input.
 
-    The docstring, name etc. of the given callable are copied to the wrapper
-    function that performs the tracking.
+    The docstring, name etc. of the given callable are copied to the wrapper function
+    that performs the tracking.
 
     The set of files that have been opened so far are stored in the `filenames`
-    attribute of this function. In general, use the _list_opened_files()
-    method.
+    attribute of this function. In general, use the _list_opened_files() method.
 
     Parameters
     ----------
@@ -478,6 +471,7 @@ def _file_tracker(to_wrap):
     global _config
 
     import functools
+
     @functools.wraps(to_wrap)
     def wrapper(*args, **kwargs):
         # Defer opening to the real function.
@@ -487,20 +481,19 @@ def _file_tracker(to_wrap):
         if not isinstance(file, io.IOBase):
             return file
 
-        # Integers indicate file objects that were created from descriptors
-        # (e.g., opened with the low-level os.open() and then wrapped with
-        # os.fdopen()). There is no reliable way to retrieve the filename; on
-        # Linux, the command 'readlink /proc/self/fd/N' can be used provided it
-        # hasn't been renamed/deleted since. I'm leaving this as unimplemented
-        # until I find an actual usecase for doing it...
+        # Integers indicate file objects that were created from descriptors (e.g.,
+        # opened with the low-level os.open() and then wrapped with os.fdopen()). There
+        # is no reliable way to retrieve the filename; on Linux, the command 'readlink
+        # /proc/self/fd/N' can be used provided it hasn't been renamed/deleted since.
+        # I'm leaving this as unimplemented until I find an actual usecase.
         if isinstance(file.name, int):
             return file
 
-        # If a file is writeable; this includes files opened in r+ or append
-        # modes. We assume these can't be dependencies.
+        # If a file is writeable; this includes files opened in r+ or append modes. We
+        # assume these can't be dependencies.
         if file.writable():
-            # Does it match the filename pattern used by the PGF backend for
-            # rasterised parts of the image being saved as PNGs?
+            # Does it match the filename pattern used by the PGF backend for rasterised
+            # parts of the image being saved as PNGs?
             if re.match(r"^.+-img\d+.png$", file.name):
                 _file_tracker.filenames.add(("w", _relative_if_subdir(file.name)))
 
@@ -514,30 +507,29 @@ def _file_tracker(to_wrap):
     # Return the wrapper function.
     return wrapper
 
+
 # Initialise the set of opened files.
 _file_tracker.filenames = set()
 
 
 class ImportTracker(importlib.abc.MetaPathFinder):
-    """Import finder which tracks imported files in configured paths.
+    """Import finder which tracks imported files in configured paths."""
 
-    """
     def __init__(self):
         super().__init__()
         self._avoid_recursion = set()
         self.imported = set()
 
     def find_spec(self, fullname, path, target=None):
-        # According to PEP451, this is mostly intended for a reload. I can't
-        # see a way (without calling importlib._bootstrap._find_spec, which
-        # should not be imported according to the note at the top of the
-        # module) to pass this information on. Hence, lets skip tracking in
-        # this case.
+        # According to PEP451, this is mostly intended for a reload. I can't see a way
+        # (without calling importlib._bootstrap._find_spec, which should not be imported
+        # according to the note at the top of the module) to pass this information on.
+        # Hence, lets skip tracking in this case.
         if target is not None:  # pragma: no cover
             return None
 
-        # We use importlib to find the actual spec, so we need to avoid
-        # recursing when this finder is called again.
+        # We use importlib to find the actual spec, so we need to avoid recursing when
+        # this finder is called again.
         if fullname in self._avoid_recursion:
             return None
 
@@ -559,20 +551,20 @@ class ImportTracker(importlib.abc.MetaPathFinder):
 def _install_standard_file_trackers():
     """Internal: install standard file trackers in likely locations.
 
-    This wraps the standard open() function as well as the io.open() function.
-    This seems to catch all uses of the standard NumPy `load` (for both .npy
-    and .npz files) and `loadtxt`, and should also work for most libraries
-    which use Python functions to open files. It won't work for anything
-    which uses low-level methods, either through the `os` module or at C level
-    in compiled modules.
+    This wraps the standard open() function as well as the io.open() function. This
+    seems to catch all uses of the standard NumPy `load` (for both .npy and .npz files)
+    and `loadtxt`, and should also work for most libraries which use Python functions to
+    open files. It won't work for anything which uses low-level methods, either through
+    the `os` module or at C level in compiled modules.
 
     Note: this needs to be run prior to importing NumPy (and therefore prior to
-    importing Matplotlib) as NumPy's data loader module stores a reference to
-    io.open which wouldn't get wrapped.
+    importing Matplotlib) as NumPy's data loader module stores a reference to io.open
+    which wouldn't get wrapped.
 
     """
     import builtins
     import io
+
     builtins.open = _file_tracker(builtins.open)
     io.open = _file_tracker(io.open)
     if hasattr(pathlib, "_normal_accessor"):
@@ -586,8 +578,8 @@ def _install_extra_file_trackers(trackers):
     Parameters
     ----------
     trackers : list
-        List of strings containing the names of the extra trackers to install.
-        Names are not case-sensitive. Currently only "netCDF4" is supported.
+        List of strings containing the names of the extra trackers to install. Names are
+        not case-sensitive. Currently only "netCDF4" is supported.
 
     """
     for tracker in trackers:
@@ -597,14 +589,15 @@ def _install_extra_file_trackers(trackers):
         if tracker == "netcdf4":
             import netCDF4
 
-            # Wrap the Dataset class to modify its initialiser to track read
-            # files. The class is part of the compiled extension so we can't
-            # just override the initialiser.
+            # Wrap the Dataset class to modify its initialiser to track read files. The
+            # class is part of the compiled extension so we can't just override the
+            # initialiser.
             class PgfutilsTrackedDataset(netCDF4.Dataset):
                 def __init__(self, filename, mode="r", **kwargs):
                     super().__init__(filename, mode=mode, **kwargs)
                     if mode == "r":
                         _file_tracker.filenames.add(("r", filename))
+
             netCDF4.Dataset = PgfutilsTrackedDataset
 
             # Same deal for the MFDataset (multiple files read as one dataset).
@@ -615,11 +608,13 @@ def _install_extra_file_trackers(trackers):
                     # Single string: glob pattern to expand.
                     if isinstance(files, str):
                         import glob
+
                         files = glob.glob(files)
 
                     # And track them all.
                     for fn in files:
                         _file_tracker.filenames.add(("r", fn))
+
             netCDF4.MFDataset = PgfutilsTrackedMFDataset
 
         else:
@@ -629,11 +624,10 @@ def _install_extra_file_trackers(trackers):
 def add_dependencies(*args):
     """Add a file dependency for the current figure.
 
-    In most situations, the in-built file tracking should suffice. However,
-    some files can be missed (for example, if a library you are using has its
-    file opening routines in a compiled extension rather than using Python
-    functions). This function can be used to manually add these files to the
-    dependencies of the current figure.
+    In most situations, the in-built file tracking should suffice. However, some files
+    can be missed (for example, if a library you are using has its file opening routines
+    in a compiled extension rather than using Python functions). This function can be
+    used to manually add these files to the dependencies of the current figure.
 
     Parameters
     ----------
@@ -652,58 +646,54 @@ def _list_opened_files():
     Returns
     -------
     list
-        A list of tuples (mode, filename) of files in or under the current
-        directory. Entries with mode 'r' were opened for reading and are
-        assumed to be dependencies of the generated figure. Entries with mode
-        'w' were opened for writing and are rasterised graphics included in the
-        final figure. The list is sorted by mode and then filename.
+        A list of tuples (mode, filename) of files in or under the current directory.
+        Entries with mode 'r' were opened for reading and are assumed to be dependencies
+        of the generated figure. Entries with mode 'w' were opened for writing and are
+        rasterised graphics included in the final figure. The list is sorted by mode and
+        then filename.
 
     """
     return sorted(_file_tracker.filenames)
 
 
-# If the script has been run in an interactive mode (currently, if it is
-# running under IPython in a mode with an event loop) then we will display the
-# figure in the save() call rather than saving it.
-# Interactivity is tested each time setup_figure() is called. This global
-# stores the latest result to avoid running the test twice (we need it in
-# setup_figure() to avoid setting the backend if interactive, and then in
-# save()).
+# If the script has been run in an interactive mode (currently, if it is running under
+# IPython in a mode with an event loop) then we will display the figure in the save()
+# call rather than saving it.  Interactivity is tested each time setup_figure() is
+# called. This global stores the latest result to avoid running the test twice (we need
+# it in setup_figure() to avoid setting the backend if interactive, and then in save()).
 _interactive = False
 
 
-def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
-                 full_width=False, **kwargs):
+def setup_figure(
+    width=1.0, height=1.0, columns=None, margin=False, full_width=False, **kwargs
+):
     """Set up matplotlib figures for PGF output.
 
-    This function should be imported and run before you import any matplotlib
-    code. Figure properties can be passed in as keyword arguments to override
-    the project configuration.
+    This function should be imported and run before you import any matplotlib code.
+    Figure properties can be passed in as keyword arguments to override the project
+    configuration.
 
     Parameters
     ----------
     width, height : float or string
-        If a float, the fraction of the corresponding text width or height that
-        the figure should take up. If a string, a dimension in centimetres
-        (cm), millimetres (mm), inches (in) or points (pt). For example, '3in'
-        or '2.5 cm'.
+        If a float, the fraction of the corresponding text width or height that the
+        figure should take up. If a string, a dimension in centimetres (cm), millimetres
+        (mm), inches (in) or points (pt). For example, '3in' or '2.5 cm'.
     columns : integer, optional
-        The number of columns the figure should span. This should be between 1
-        and the total number of columns in the document (as specified in the
-        configuration). A value of None corresponds to spanning all columns.
-        Any other value results in a ValueError being raised.
+        The number of columns the figure should span. This should be between 1 and the
+        total number of columns in the document (as specified in the configuration). A
+        value of None corresponds to spanning all columns.  Any other value results in a
+        ValueError being raised.
     margin : Boolean, default False
-        If True, a margin figure (i.e., one to fit within the margin notes in
-        the document) is generated. If the width is a fraction, it is treated
-        as a fraction of the marginpar_width configuration setting. The height
-        is still treated as a fraction of the text height. The columns setting
-        is ignored if this is True.
+        If True, a margin figure (i.e., one to fit within the margin notes in the
+        document) is generated. If the width is a fraction, it is treated as a fraction
+        of the marginpar_width configuration setting. The height is still treated as a
+        fraction of the text height. The columns setting is ignored if this is True.
     full_width : Boolean, default False
-        If True, a full-width figure, i.e., one spanning the main text, the
-        margin notes, and the separator between them, is generated. A
-        fractional width is treated relative to the full width. The height is
-        still treated as a fraction of the text height. The columns and margin
-        parameters are ignored if this is True.
+        If True, a full-width figure, i.e., one spanning the main text, the margin
+        notes, and the separator between them, is generated. A fractional width is
+        treated relative to the full width. The height is still treated as a fraction of
+        the text height. The columns and margin parameters are ignored if this is True.
 
     """
     global _config, _interactive
@@ -712,8 +702,8 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     _config_reset()
 
     # Load configuration from a local file if one exists.
-    if os.path.exists('pgfutils.cfg'):
-        _config.read('pgfutils.cfg')
+    if os.path.exists("pgfutils.cfg"):
+        _config.read("pgfutils.cfg")
         _file_tracker.filenames.add(("r", "pgfutils.cfg"))
 
     # And anything given in the function call.
@@ -721,13 +711,13 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
         _config.read_kwargs(**kwargs)
 
     # Set environment variables specified in the configuration.
-    for line in _config['pgfutils']['environment'].splitlines():
+    for line in _config["pgfutils"]["environment"].splitlines():
         line = line.strip()
         if not line:
             continue
 
         # Check the variables are formatted correctly.
-        if '=' not in line:
+        if "=" not in line:
             raise ValueError(
                 "Environment variables should be in the form NAME=VALUE. "
                 f"The line '{line}' does not match this."
@@ -737,11 +727,11 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
         key, value = line.split("=", 1)
         os.environ[key.strip()] = value.strip()
 
-    # Install file trackers if desired. This must be done before anything which
-    # imports Matplotlib.
-    if 'PGFUTILS_TRACK_FILES' in os.environ:
+    # Install file trackers if desired. This must be done before anything which imports
+    # Matplotlib.
+    if "PGFUTILS_TRACK_FILES" in os.environ:
         _install_standard_file_trackers()
-        extra = _config['pgfutils']['extra_tracking'].strip()
+        extra = _config["pgfutils"]["extra_tracking"].strip()
         if extra:
             _install_extra_file_trackers(extra.split(","))
 
@@ -750,18 +740,18 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
 
     # If we're running under IPython, see if there is an event loop in use.
     # Unfortunately, the matplotlib.rcParams['interactive'] (or equivalently,
-    # matplotlib.is_interactive()) don't appear to propagate when IPython runs
-    # a script so we can't test those.
+    # matplotlib.is_interactive()) don't appear to propagate when IPython runs a script
+    # so we can't test those.
     try:
         ipython = get_ipython()
     except NameError:
         pass
     else:
-        if ipython.active_eventloop is not None:            # pragma: no cover
+        if ipython.active_eventloop is not None:  # pragma: no cover
             _interactive = True
 
     # Add any desired entries to sys.path.
-    for newpath in _config['paths']['pythonpath'].splitlines():
+    for newpath in _config["paths"]["pythonpath"].splitlines():
         newpath = newpath.strip()
         if newpath:
             sys.path.insert(0, newpath)
@@ -769,64 +759,74 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     # We're now ready to start configuring Matplotlib.
     import matplotlib
 
-    # Set the backend. We don't want to overwrite the current backend if this
-    # is an interactive run as the PGF backend does not implement a GUI.
-    if not _interactive:                              # pragma: no cover
-        matplotlib.use('pgf')
+    # Set the backend. We don't want to overwrite the current backend if this is an
+    # interactive run as the PGF backend does not implement a GUI.
+    if not _interactive:  # pragma: no cover
+        matplotlib.use("pgf")
 
     # Specify which TeX engine we are using.
-    matplotlib.rcParams['pgf.texsystem'] = _config['tex']['engine']
+    matplotlib.rcParams["pgf.texsystem"] = _config["tex"]["engine"]
 
     # Custom TeX preamble.
-    preamble = _config['pgfutils']['preamble']
-    if _config['pgfutils'].getboolean('preamble_substitute'):
-        preamble = string.Template(preamble).substitute(basedir=os.path.abspath('.'))
-    matplotlib.rcParams['pgf.preamble'] = preamble
+    preamble = _config["pgfutils"]["preamble"]
+    if _config["pgfutils"].getboolean("preamble_substitute"):
+        preamble = string.Template(preamble).substitute(basedir=os.path.abspath("."))
+    matplotlib.rcParams["pgf.preamble"] = preamble
 
     # Clear the existing lists of specific font names.
-    matplotlib.rcParams['font.sans-serif'] = []
-    matplotlib.rcParams['font.serif'] = []
-    matplotlib.rcParams['font.cursive'] = []
-    matplotlib.rcParams['font.monospace'] = []
-    matplotlib.rcParams['font.fantasy'] = []
+    matplotlib.rcParams["font.sans-serif"] = []
+    matplotlib.rcParams["font.serif"] = []
+    matplotlib.rcParams["font.cursive"] = []
+    matplotlib.rcParams["font.monospace"] = []
+    matplotlib.rcParams["font.fantasy"] = []
 
     # Don't let the backend try to load fonts.
-    matplotlib.rcParams['pgf.rcfonts'] = False
+    matplotlib.rcParams["pgf.rcfonts"] = False
 
     # Set the font family in use.
-    matplotlib.rcParams['font.family'] = _config['pgfutils']['font_family']
+    matplotlib.rcParams["font.family"] = _config["pgfutils"]["font_family"]
 
     # If a specific font was given, add it to the list of fonts for
     # the chosen font family.
-    if _config['pgfutils']['font_name']:
+    if _config["pgfutils"]["font_name"]:
         k = f"font.{_config['pgfutils']['font_family']}"
-        matplotlib.rcParams[k].append(_config['pgfutils']['font_name'])
+        matplotlib.rcParams[k].append(_config["pgfutils"]["font_name"])
 
     # Set the font sizes.
-    matplotlib.rcParams['font.size'] = _config['pgfutils'].getfloat('font_size')
-    matplotlib.rcParams['legend.fontsize'] = _config['pgfutils'].getfloat('legend_font_size')
+    matplotlib.rcParams["font.size"] = _config["pgfutils"].getfloat("font_size")
+    matplotlib.rcParams["legend.fontsize"] = _config["pgfutils"].getfloat(
+        "legend_font_size"
+    )
 
-    # Don't use Unicode in the figures. If this is not disabled, the PGF
-    # backend can replace some characters with unicode variants, and these
-    # don't always play nicely with some TeX engines and/or fonts.
-    matplotlib.rcParams['axes.unicode_minus'] = False
+    # Don't use Unicode in the figures. If this is not disabled, the PGF backend can
+    # replace some characters with unicode variants, and these don't always play nicely
+    # with some TeX engines and/or fonts.
+    matplotlib.rcParams["axes.unicode_minus"] = False
 
     # Line widths.
-    matplotlib.rcParams['axes.linewidth'] = _config['pgfutils'].getfloat('axes_line_width')
-    matplotlib.rcParams['lines.linewidth'] = _config['pgfutils'].getfloat('line_width')
+    matplotlib.rcParams["axes.linewidth"] = _config["pgfutils"].getfloat(
+        "axes_line_width"
+    )
+    matplotlib.rcParams["lines.linewidth"] = _config["pgfutils"].getfloat("line_width")
 
     # Colours.
-    matplotlib.rcParams['figure.facecolor'] = _config['pgfutils'].getcolor('figure_background')
-    matplotlib.rcParams['savefig.facecolor'] = _config['pgfutils'].getcolor('figure_background')
-    matplotlib.rcParams['axes.facecolor'] = _config['pgfutils'].getcolor('axes_background')
+    matplotlib.rcParams["figure.facecolor"] = _config["pgfutils"].getcolor(
+        "figure_background"
+    )
+    matplotlib.rcParams["savefig.facecolor"] = _config["pgfutils"].getcolor(
+        "figure_background"
+    )
+    matplotlib.rcParams["axes.facecolor"] = _config["pgfutils"].getcolor(
+        "axes_background"
+    )
 
-    # Now we need to figure out the total width available for the figure, i.e.,
-    # the width corresponding to the figure parameter being 1.
-    # First, look up some document properties.
-    text_width = _config['tex'].getdimension('text_width')
-    margin_width = _config['tex'].getdimension('marginpar_width')
-    margin_sep = _config['tex'].getdimension('marginpar_sep')
-    num_columns = _config['tex'].getint('num_columns')
+    # Now we need to figure out the total width available for the figure, i.e., the
+    # width corresponding to the figure parameter being 1.  First, look up some document
+    # properties.
+    text_width = _config["tex"].getdimension("text_width")
+    margin_width = _config["tex"].getdimension("marginpar_width")
+    margin_sep = _config["tex"].getdimension("marginpar_sep")
+    num_columns = _config["tex"].getint("num_columns")
 
     # Full-width figure.
     if full_width:
@@ -842,8 +842,10 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
 
     # More columns than present in the document.
     elif columns > num_columns:
-        msg = f"Document has {num_columns} columns, but you asked for a figure spanning {columns} columns."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Document has {num_columns} columns, but you asked for a figure spanning "
+            f"{columns} columns."
+        )
 
     # Not sure what this would mean.
     elif columns < 1:
@@ -851,20 +853,20 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
 
     # A number of columns less than the total.
     else:
-        # Figure out the width of each column. N columns have
-        # N - 1 separators between them.
-        columnsep = _config['tex'].getdimension('columnsep')
+        # Figure out the width of each column. N columns have N - 1 separators between
+        # them.
+        columnsep = _config["tex"].getdimension("columnsep")
         total_columnsep = columnsep * (num_columns - 1)
         total_columnw = text_width - total_columnsep
         column_width = total_columnw / num_columns
 
-        # And the width (including the separators between them)
-        # of the requested number of columns.
+        # And the width (including the separators between them) of the requested number
+        # of columns.
         available_width = (column_width * columns) + (columnsep * (columns - 1))
 
-    # And now we can calculate the actual figure width. If it is a float, it is
-    # a fraction of the total available width.  Otherwise, assume it's an
-    # explicit dimension.
+    # And now we can calculate the actual figure width. If it is a float, it is a
+    # fraction of the total available width.  Otherwise, assume it's an explicit
+    # dimension.
     try:
         w = float(width)
     except ValueError:
@@ -878,35 +880,35 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     except ValueError:
         h = _config.parsedimension(height)
     else:
-        h *= _config['tex'].getdimension('text_height')
+        h *= _config["tex"].getdimension("text_height")
 
     # Set the figure size.
-    matplotlib.rcParams['figure.figsize'] = [w, h]
+    matplotlib.rcParams["figure.figsize"] = [w, h]
 
     # Ask for a tight layout (i.e., minimal padding).
-    matplotlib.rcParams['figure.autolayout'] = True
+    matplotlib.rcParams["figure.autolayout"] = True
 
     # Copy any specific rcParams the user set.
-    matplotlib.rcParams.update(_config['rcParams'])
+    matplotlib.rcParams.update(_config["rcParams"])
 
 
 def save(figure=None):
     """Save the figure.
 
-    The filename is based on the name of the script which calls this function.
-    For example, if you call save() from a script named sine.py, then the saved
-    figure will be sine.pgf.
+    The filename is based on the name of the script which calls this function. For
+    example, if you call save() from a script named sine.py, then the saved figure will
+    be sine.pgf.
 
     Parameters
     ----------
     figure: matplotlib Figure object, optional
-        If not given, then the current figure -- as returned by
-        matplotlib.pyplot.gcf() -- will be saved.
+        If not given, then the current figure as returned by matplotlib.pyplot.gcf()
+        will be saved.
 
     """
     global _config, _interactive
 
-    from matplotlib import pyplot as plt, __version__ as mpl_version
+    from matplotlib import __version__ as mpl_version, pyplot as plt
 
     # Get the current figure if needed.
     if figure is None:
@@ -914,33 +916,32 @@ def save(figure=None):
 
     # Go through and fix up a few little quirks on the axes within this figure.
     for axes in figure.get_axes():
-        # There are no rcParams for the legend properties. Go through and set
-        # these directly before we save.
+        # There are no rcParams for the legend properties. Go through and set these
+        # directly before we save.
         legend = axes.get_legend()
         if legend:
             frame = legend.get_frame()
-            frame.set_linewidth(_config['pgfutils'].getfloat('legend_border_width'))
-            frame.set_alpha(_config['pgfutils'].getfloat('legend_opacity'))
-            frame.set_ec(_config['pgfutils'].getcolor('legend_border_color'))
-            frame.set_fc(_config['pgfutils'].getcolor('legend_background'))
+            frame.set_linewidth(_config["pgfutils"].getfloat("legend_border_width"))
+            frame.set_alpha(_config["pgfutils"].getfloat("legend_opacity"))
+            frame.set_ec(_config["pgfutils"].getcolor("legend_border_color"))
+            frame.set_fc(_config["pgfutils"].getcolor("legend_background"))
 
-        # Some PDF viewers show white lines through vector colorbars. This is a
-        # bug in the viewers, but can be worked around by forcing the edge of
-        # the patches in the colorbar to have the same colour as their faces.
-        # This doesn't work with partially transparent (alpha < 1) images. As
-        # of matplotlib v1.5.0, colorbars with many patches (> 50 by default)
-        # are rasterized and included as PNGs so this workaround is not needed
-        # in most cases.
+        # Some PDF viewers show white lines through vector colorbars. This is a bug in
+        # the viewers, but can be worked around by forcing the edge of the patches in
+        # the colorbar to have the same colour as their faces.  This doesn't work with
+        # partially transparent (alpha < 1) images. As of matplotlib v1.5.0, colorbars
+        # with many patches (> 50 by default) are rasterized and included as PNGs so
+        # this workaround is not needed in most cases.
         #
         # http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar
         # https://github.com/matplotlib/matplotlib/issues/1188
         # https://github.com/matplotlib/matplotlib/pull/4481
         # https://github.com/matplotlib/matplotlib/commit/854f74a
 
-        # Gather a set of colorbars.  This includes colorbars from images
-        # (imshow etc), collections (e.g., scatter plots), and contour plot
-        # lines (the roundabout _current_image way -- there doesn't appear to
-        # be any other reference from the axes to the QuadContourSet object).
+        # Gather a set of colorbars.  This includes colorbars from images (imshow etc),
+        # collections (e.g., scatter plots), and contour plot lines (the roundabout
+        # _current_image way -- there doesn't appear to be any other reference from the
+        # axes to the QuadContourSet object).
         colorbars = set()
         colorbars.update(im.colorbar for im in axes.images if im.colorbar)
         colorbars.update(coll.colorbar for coll in axes.collections if coll.colorbar)
@@ -957,10 +958,10 @@ def save(figure=None):
                 continue
             if (cb.alpha or 1.0) < 1.0:
                 continue
-            cb.solids.set_edgecolor('face')
+            cb.solids.set_edgecolor("face")
 
     # Interactive mode: show the figure rather than saving.
-    if _interactive:                     # pragma: no cover
+    if _interactive:  # pragma: no cover
         plt.show()
         return
 
@@ -977,45 +978,45 @@ def save(figure=None):
 
     # We have been tracking opened files and need to
     # output our results.
-    if 'PGFUTILS_TRACK_FILES' in os.environ:
+    if "PGFUTILS_TRACK_FILES" in os.environ:
         # The files.
-        files = '\n'.join([':'.join(f) for f in _list_opened_files()])
+        files = "\n".join([":".join(f) for f in _list_opened_files()])
 
         # Figure out where to print it.
-        dest = os.environ.get('PGFUTILS_TRACK_FILES') or '1'
+        dest = os.environ.get("PGFUTILS_TRACK_FILES") or "1"
 
         # stdout.
-        if dest == '1':
+        if dest == "1":
             sys.stdout.write(files)
 
         # stderr.
-        elif dest == '2':
+        elif dest == "2":
             sys.stderr.write(files)
 
         # A named file.
         else:
-            with open(dest, 'w') as f:
+            with open(dest, "w") as f:
                 f.write(files)
 
-    # List of all postprocessing functions we are running on this figure.
-    # Each should take in a single line as a string, and return the line with
-    # any required modifications.
+    # List of all postprocessing functions we are running on this figure. Each should
+    # take in a single line as a string, and return the line with any required
+    # modifications.
     pp_funcs = []
 
     # Local cache of postprocessing options.
-    fix_raster_paths = _config['postprocessing'].getboolean('fix_raster_paths')
-    tikzpicture = _config['postprocessing'].getboolean('tikzpicture')
+    fix_raster_paths = _config["postprocessing"].getboolean("fix_raster_paths")
+    tikzpicture = _config["postprocessing"].getboolean("tikzpicture")
 
     # Add the appropriate directory prefix to all raster images
     # included via \pgfimage.
     if fix_raster_paths:
-        figdir = os.path.dirname(figname) or '.'
+        figdir = os.path.dirname(figname) or "."
 
         # Only apply this if the figure is not in the top-level directory.
         if not os.path.samefile(figdir, os.curdir):
             prefix = os.path.relpath(figdir)
             expr = re.compile(r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)(.+?)}")
-            repl = fr"\1{prefix}/\2}}"
+            repl = rf"\1{prefix}/\2}}"
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Use the tikzpicture environment rather than pgfpicture.
@@ -1025,22 +1026,22 @@ def save(figure=None):
         pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Postprocess the figure, moving it into the final destination.
-    with open(mpname, 'r') as infile, open(figname, 'w') as outfile:
+    with open(mpname, "r") as infile, open(figname, "w") as outfile:
 
         # Make some modifications to the header.
         line = infile.readline()
-        while line[0] == '%':
-            # Update the creator line to include pgfutils version, and add a
-            # line with the path of the script that created the figure.
+        while line[0] == "%":
+            # Update the creator line to include pgfutils version, and add a line with
+            # the path of the script that created the figure.
             if "Creator:" in line:
                 outfile.write(line[:-1])
                 outfile.write(" v")
                 outfile.write(mpl_version)
                 outfile.write(", matplotlib-pgfutils v")
                 outfile.write(__version__)
-                outfile.write('\n%%  Script: ')
+                outfile.write("\n%%  Script: ")
                 outfile.write(os.path.abspath(script))
-                outfile.write('\n')
+                outfile.write("\n")
 
             # Update the \input instructions.
             elif r"\input{<filename>.pgf}" in line:
@@ -1055,7 +1056,9 @@ def save(figure=None):
 
             # If we're fixing the paths to rasterised images, we can remove the
             # instructions about using the import package.
-            elif fix_raster_paths and line.startswith("%% Figures using additional raster"):
+            elif fix_raster_paths and line.startswith(
+                "%% Figures using additional raster"
+            ):
                 while r"\import{<path to file>}" not in line:
                     line = infile.readline()
 

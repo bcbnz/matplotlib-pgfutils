@@ -1,46 +1,49 @@
-from setuptools import setup
-from pgfutils import __version__
-import os.path
 from glob import glob
+import os.path
 import re
+
+from setuptools import setup
+
+from pgfutils import __version__
+
 
 # Load the readme as the long description,
 # mostly for PyPI's benefit.
-with open("README.md", 'r') as f:
+with open("README.md", "r") as f:
     long_desc = f.read()
 
 # Turn relative links into absolute ones pointing
 # at the file in the master branch of the repository.
 long_desc = re.sub(
-        r"(\[[^]]+]\()(?!http)(.+\))",
-        r"\1https://github.com/bcbnz/matplotlib-pgfutils/blob/master/\2",
-        long_desc
+    r"(\[[^]]+]\()(?!http)(.+\))",
+    r"\1https://github.com/bcbnz/matplotlib-pgfutils/blob/master/\2",
+    long_desc,
 )
 
 
 # Data files we want to install in /share.
 # First, some simple static ones.
 data_files = [
-    ['share/matplotlib-pgfutils/', ['extras/pgfutils.cfg', 'extras/latexmkrc']],
-    ['share/matplotlib-pgfutils/examples', ['extras/examples/README.md']],
+    ["share/matplotlib-pgfutils/", ["extras/pgfutils.cfg", "extras/latexmkrc"]],
+    ["share/matplotlib-pgfutils/examples", ["extras/examples/README.md"]],
 ]
 
 # And now to programmatically load the examples.
-for obj in glob('extras/examples/*'):
+for obj in glob("extras/examples/*"):
     if not os.path.isdir(obj):
         continue
 
     # The final install directory for this example.
-    install_dir = 'share/matplotlib-pgfutils/examples/' + os.path.basename(obj)
+    install_dir = "share/matplotlib-pgfutils/examples/" + os.path.basename(obj)
 
     # Find all suitable files in this example directory.
     files = []
     for fullname in glob(obj + "/*"):
         fn = os.path.basename(fullname)
         stem, ext = os.path.splitext(fn)
-        if fn in {'latexmkrc', 'Makefile', 'pgfutils.cfg'}:
+        if fn in {"latexmkrc", "Makefile", "pgfutils.cfg"}:
             files.append(fullname)
-        elif ext in {'.py', '.tex'}:
+        elif ext in {".py", ".tex"}:
             files.append(fullname)
 
     # And, if we found at least one thing to install,

@@ -1,15 +1,17 @@
-from pgfutils import setup_figure, add_dependencies, save
+from pgfutils import add_dependencies, save, setup_figure
+
+
 setup_figure(width=1, height=1)
 
-import numpy as np
 from matplotlib import pyplot as plt
-import os.path
+import numpy as np
 
-noise = np.load('noise.npy')
+
+noise = np.load("noise.npy")
 plt.imshow(noise)
 plt.colorbar()
 
-data = np.loadtxt('scatter.csv', delimiter=',', dtype=int)
+data = np.loadtxt("scatter.csv", delimiter=",", dtype=int)
 
 x = data[:, :3]
 y = data[:, 3:]
