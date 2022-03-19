@@ -36,7 +36,7 @@ consistent-looking plots.
 
 """
 
-__version__ = "1.7.0"
+__version__ = "1.8.0.dev0"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy
 # caches a reference to the io.open() method as part of its data loading
@@ -111,7 +111,7 @@ class PgfutilsParser(configparser.ConfigParser):
             for sect, opts in self._sections.items():
                 if sect == 'rcParams':
                     continue
-                options.update('{}.{}'.format(sect, opt) for opt in opts.keys())
+                options.update(f"{sect}.{opt}" for opt in opts.keys())
             return options
 
         # Get the options before and after reading.
@@ -123,8 +123,8 @@ class PgfutilsParser(configparser.ConfigParser):
         diff = after.difference(before)
         if diff:
             if len(diff) == 1:
-                raise KeyError("{}: unknown option {}".format(filename, diff.pop()))
-            raise KeyError("{}: unknown options {}".format(filename, ', '.join(diff)))
+                raise KeyError(f"{filename}: unknown option {diff.pop()}")
+            raise KeyError(f"{filename}: unknown options {', '.join(diff)}")
 
         # Otherwise we're OK to continue.
         return result
@@ -156,7 +156,7 @@ class PgfutilsParser(configparser.ConfigParser):
             # Check this option already exists.
             section = lookup.get(key, None)
             if section is None:
-                raise KeyError("Unknown configuration option {}.".format(key))
+                raise KeyError(f"Unknown configuration option {key}.")
 
             # Save it.
             d[section][key] = value
@@ -200,7 +200,7 @@ class PgfutilsParser(configparser.ConfigParser):
         # Try to parse it.
         m = self._dimre.match(dim)
         if not m:
-            raise DimensionError("Could not parse {} as a dimension.".format(dim))
+            raise DimensionError(f"Could not parse {dim} as a dimension.")
 
         # Pull out the pieces.
         groups = m.groupdict()
@@ -217,7 +217,7 @@ class PgfutilsParser(configparser.ConfigParser):
 
         # Unknown unit.
         if factor is None:
-            raise DimensionError("Unknown unit {}.".format(unit))
+            raise DimensionError(f"Unknown unit {unit}.")
 
         # Do the conversion.
         return size / factor
@@ -254,8 +254,7 @@ class PgfutilsParser(configparser.ConfigParser):
         try:
             return self.parsedimension(dim)
         except DimensionError as e:
-            msg = "{}.{}: {}".format(section, option, str(e))
-            raise DimensionError(msg) from None
+            raise DimensionError(f"{section}.{option}: {e}") from None
 
 
     def getcolor(self, section, option, **kwargs):
@@ -301,7 +300,7 @@ class PgfutilsParser(configparser.ConfigParser):
         else:
             # For historical reasons Matlotlib requires this to be a string.
             if not (0 <= gray <= 1):
-                raise ColorError("{}.{}: greyscale floats must be in [0, 1].".format(section, option))
+                raise ColorError(f"{section}.{option}: greyscale floats must be in [0, 1].")
             return value
 
         # Nth color in the cycle (i.e., C1, C2 etc), or a named color.
@@ -316,25 +315,25 @@ class PgfutilsParser(configparser.ConfigParser):
 
             # Can be RGB or RGBA.
             if not (2 < len(entries) < 5):
-                raise ColorError("{}.{}: RGBA colors must have 3 or 4 entries.".format(section, option))
+                raise ColorError(f"{section}.{option}: RGBA colors must have 3 or 4 entries.")
 
             # Attempt to convert to floats.
             try:
                 float_entries = tuple(map(float, entries))
             except ValueError:
-                raise ColorError("{}.{}: RGBA colors must be floating point.".format(section, option)) from None
+                raise ColorError(f"{section}.{option}: RGBA colors must be floating point.") from None
 
             # And get Matplotlib to convert to a color.
             try:
                 rgba = matplotlib.colors.to_rgba(float_entries)
             except ValueError as e:
-                raise ColorError("{}.{}: {}.".format(section, option, e)) from None
+                raise ColorError(f"{section}.{option}: {e}.") from None
 
             # Done.
             return rgba
 
         # Not a format we know.
-        raise ColorError("{}.{}: could not interpret '{}' as a color.".format(section, option, value))
+        raise ColorError(f"{section}.{option}: could not interpret '{value}' as a color.")
 
 
     def in_tracking_dir(self, type, fn):
@@ -360,7 +359,7 @@ class PgfutilsParser(configparser.ConfigParser):
             paths = self.get("paths", "pythonpath").strip().splitlines()
             paths.extend(self.get("paths", "extra_imports").strip().splitlines())
         else:
-            raise ValueError("Unknown tracking type {0:s}.".format(type))
+            raise ValueError(f"Unknown tracking type {type}.")
 
         # If the filename relative to one of these paths does not have to leave
         # the directory (i.e., doesn't start with ..) then it must be within
@@ -624,7 +623,7 @@ def _install_extra_file_trackers(trackers):
             netCDF4.MFDataset = PgfutilsTrackedMFDataset
 
         else:
-            raise ValueError("Unknown extra tracker {}".format(tracker))
+            raise ValueError(f"Unknown extra tracker {tracker}.")
 
 
 def add_dependencies(*args):
@@ -731,7 +730,7 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
         if '=' not in line:
             raise ValueError(
                 "Environment variables should be in the form NAME=VALUE. "
-                "The line '{}' does not match this.".format(line)
+                f"The line '{line}' does not match this."
             )
 
         # And set them.
@@ -800,7 +799,7 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
     # If a specific font was given, add it to the list of fonts for
     # the chosen font family.
     if _config['pgfutils']['font_name']:
-        k = 'font.{}'.format(_config['pgfutils']['font_family'])
+        k = f"font.{_config['pgfutils']['font_family']}"
         matplotlib.rcParams[k].append(_config['pgfutils']['font_name'])
 
     # Set the font sizes.
@@ -843,8 +842,8 @@ def setup_figure(width=1.0, height=1.0, columns=None, margin=False,
 
     # More columns than present in the document.
     elif columns > num_columns:
-        msg = "Document has {} columns, but you asked for a figure spanning {} columns."
-        raise ValueError(msg.format(num_columns, columns))
+        msg = f"Document has {num_columns} columns, but you asked for a figure spanning {columns} columns."
+        raise ValueError(msg)
 
     # Not sure what this would mean.
     elif columns < 1:
@@ -1016,7 +1015,7 @@ def save(figure=None):
         if not os.path.samefile(figdir, os.curdir):
             prefix = os.path.relpath(figdir)
             expr = re.compile(r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)(.+?)}")
-            repl = r"\1{0:s}/\2}}".format(prefix)
+            repl = fr"\1{prefix}/\2}}"
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Use the tikzpicture environment rather than pgfpicture.
