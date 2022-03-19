@@ -54,12 +54,17 @@ save()
 Requirements
 ------------
 
-pgfutils follows [NEP29][3] when determining supported Python versions. Any
-minor version of Python released within the 42 months prior to a pgfutils
-release is supported.
+pgfutils follows [NEP29][3] when determining supported Python versions. Any minor
+version of Python released within the 42 months prior to a pgfutils release is
+supported, with a minimum of 2 minor versions. As of pgfutils 1.8.0, this means Python
+3.8 or later.
 
-The only required external dependency is Matplotlib. Any minor version of
-Matplotlib released within the 24 months prior to a pgfutils release is
+The only required external dependency is Matplotlib. Any minor version of Matplotlib
+which was first released within the 24 months prior to a pgfutils release is supported,
+with a minimum of 2 minor versions. As of pgfutils 1.8.0, this means Matplotlib 3.3.0 or
+later.
+
+Older versions of Python or Matplotlib may work, but are not tested and are not
 supported.
 
 
