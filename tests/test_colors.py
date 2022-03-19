@@ -103,7 +103,7 @@ class TestColorClass:
             color[channel] = 0
 
         # And some invalid formats too.
-        for value in ("1,1,1", "fail", "yes", "no"):
+        for value in ("fail", "yes", "no"):
             with pytest.raises(ColorError):
                 _config.read_kwargs(axes_background=value)
                 _config["pgfutils"].getcolor("axes_background")
@@ -138,7 +138,7 @@ class TestColorClass:
             color[channel] = 0
 
         # And some invalid formats too.
-        for value in ("1,1,1", "fail", "yes", "no"):
+        for value in ("fail", "yes", "no"):
             with pytest.raises(ColorError):
                 _config.read_kwargs(axes_background=value)
                 _config["pgfutils"].getcolor("axes_background")

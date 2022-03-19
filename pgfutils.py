@@ -44,6 +44,7 @@ __version__ = "1.8.0.dev0"
 # imported modules means there should be minimal impact from importing Matplotlib
 # separately in different functions.
 
+import ast
 import configparser
 import importlib.abc
 import inspect
@@ -289,11 +290,12 @@ class PgfutilsParser(configparser.ConfigParser):
         except ValueError:
             pass
         else:
-            # For historical reasons Matlotlib requires this to be a string.
             if not (0 <= gray <= 1):
                 raise ColorError(
                     f"{section}.{option}: greyscale floats must be in [0, 1]."
                 )
+
+            # For historical reasons Matlotlib requires this to be a string.
             return value
 
         # Nth color in the cycle (i.e., C1, C2 etc), or a named color. Unfortunately,
@@ -302,39 +304,31 @@ class PgfutilsParser(configparser.ConfigParser):
         if matplotlib.colors.is_color_like(value):
             return value
 
-        # Tuple or list.
-        if (value[0] == "(" and value[-1] == ")") or (
-            value[0] == "[" and value[-1] == "]"
-        ):
-            entries = value[1:-1].split(",")
+        # Anything else we accept is valid Python syntax, so parse it.
+        try:
+            parsed = ast.literal_eval(value)
+        except (SyntaxError, TypeError, ValueError):
+            raise ColorError(
+                f"{section}.{option}: could not interpret '{value}' as a color."
+            ) from None
 
-            # Can be RGB or RGBA.
-            if not (2 < len(entries) < 5):
-                raise ColorError(
-                    f"{section}.{option}: RGBA colors must have 3 or 4 entries."
-                )
+        # Needs to be a list or tuple of channel values.
+        if not isinstance(parsed, (list, tuple)):
+            raise ColorError(
+                f"{section}.{option}: could not interpret '{value}' as a color."
+            )
 
-            # Attempt to convert to floats.
-            try:
-                float_entries = tuple(map(float, entries))
-            except ValueError:
-                raise ColorError(
-                    f"{section}.{option}: RGBA colors must be floating point."
-                ) from None
+        # Filter out Booleans which Matplotlib would treat as 0 or 1.
+        if any(isinstance(entry, bool) for entry in parsed):
+            raise ColorError(
+                f"{section}.{option}: could not interpret '{value}' as a color."
+            )
 
-            # And get Matplotlib to convert to a color.
-            try:
-                rgba = matplotlib.colors.to_rgba(float_entries)
-            except ValueError as e:
-                raise ColorError(f"{section}.{option}: {e}.") from None
-
-            # Done.
-            return rgba
-
-        # Not a format we know.
-        raise ColorError(
-            f"{section}.{option}: could not interpret '{value}' as a color."
-        )
+        # And get Matplotlib to convert to a color.
+        try:
+            return matplotlib.colors.to_rgba(parsed)
+        except ValueError as e:
+            raise ColorError(f"{section}.{option}: {e}.") from None
 
     def in_tracking_dir(self, type, fn):
         """Check if a file is in a tracking directory.
