@@ -32,5 +32,6 @@ jobs:
         uses: psf/black@stable
 
       - name: Check overall status
-        if: ${{steps.isort.outcome}} == 'failure' || ${{steps.black.outcome}} == 'failure'
-        run: exit 1
+        run: |
+          if [ ${{steps.isort.outcome}} = "failure" ]; then exit 1; fi
+          if [ ${{steps.black.outcome}} = "failure" ]; then exit 1; fi
