@@ -1,0 +1,36 @@
+name: Check code formatting
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  run-linters:
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        id: setup
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.x"
+          architecture: x64
+
+      - name: Check import ordering with isort
+        id: isort
+        continue-on-error: true
+        uses: isort/isort-action@master
+
+      - name: Check code style with Black
+        id: black
+        continue-on-error: true
+        uses: psf/black@stable
+
+      - name: Check overall status
+        if: ${{steps.isort.outcome}} == 'failure' || ${{steps.black.outcome}} == 'failure'
+        run: exit 1
