@@ -57,13 +57,13 @@ import string
 import sys
 
 
-class DimensionError(Exception):
+class DimensionError(ValueError):
     """A configuration entry could not be converted to a dimension."""
 
     pass
 
 
-class ColorError(Exception):
+class ColorError(ValueError):
     """A configuration entry could not be converted to a color."""
 
     pass
