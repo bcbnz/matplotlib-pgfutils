@@ -1,5 +1,4 @@
-from glob import glob
-import os.path
+from pathlib import Path
 import re
 
 from setuptools import setup
@@ -29,28 +28,24 @@ data_files = [
 ]
 
 # And now to programmatically load the examples.
-for obj in glob("extras/examples/*"):
-    if not os.path.isdir(obj):
+example_dir = Path(__file__).parent / "extras" / "examples"
+install_base = Path("share") / "matplotlib-pgfutils" / "examples"
+for obj in example_dir.iterdir():
+    if not obj.is_dir():
         continue
-
-    # The final install directory for this example.
-    install_dir = "share/matplotlib-pgfutils/examples/" + os.path.basename(obj)
 
     # Find all suitable files in this example directory.
     files = []
-    for fullname in glob(obj + "/*"):
-        fn = os.path.basename(fullname)
-        stem, ext = os.path.splitext(fn)
-        if fn in {"latexmkrc", "Makefile", "pgfutils.cfg"}:
-            files.append(fullname)
-        elif ext in {".py", ".tex"}:
-            files.append(fullname)
+    for fn in obj.iterdir():
+        if fn.name in {"latexmkrc", "Makefile", "pgfutils.cfg"}:
+            files.append(str(fn))
+        elif fn.suffix in {".py", ".tex"}:
+            files.append(str(fn))
 
     # And, if we found at least one thing to install,
     # add it to the overall list.
     if files:
-        data_files.append([install_dir, files])
-
+        data_files.append([str(install_base / obj.name), files])
 
 # And hand over to setuptools for the rest.
 setup(

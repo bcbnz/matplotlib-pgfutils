@@ -1,11 +1,14 @@
 import os
-import os.path
+from pathlib import Path
 
 import pytest
 
 from pgfutils import save, setup_figure
 
-from .utils import build_figure, clean_dir
+from .utils import build_pypgf
+
+
+srcdir = Path(__file__).parent.parent
 
 
 class TestMiscClass:
@@ -24,13 +27,11 @@ class TestMiscClass:
         with pytest.raises(AttributeError):
             save(self)
 
-    def test_readme_example(self):
+    def test_readme_example(self, tmpdir):
         """Check example in README can be built..."""
         # Figure out some paths.
-        base = os.path.dirname(__file__)
-        rfn = os.path.join(base, "..", "README.md")
-        src = os.path.join(base, "sources")
-        sfn = os.path.join(src, "readme.py")
+        rfn = srcdir / "README.md"
+        sfn = tmpdir / "readme.py"
 
         # Extract the example from the README.
         with open(rfn, "r") as readme, open(sfn, "w") as script:
@@ -46,7 +47,5 @@ class TestMiscClass:
                         in_script = True
 
         # Confirm it builds.
-        res = build_figure(src, "readme.py")
-        assert res.returncode == 0, "Could not build README example."
-        clean_dir(src)
-        os.unlink(sfn)
+        with build_pypgf(tmpdir, "readme.py") as res:
+            assert res.returncode == 0, "Could not build README example."

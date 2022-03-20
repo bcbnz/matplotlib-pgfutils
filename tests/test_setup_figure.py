@@ -1,5 +1,3 @@
-from contextlib import contextmanager
-import os
 from pathlib import Path
 
 import matplotlib
@@ -8,20 +6,10 @@ from pytest import approx, raises
 
 from pgfutils import _config, _config_reset, setup_figure
 
-from .utils import build_figure, clean_dir
+from .utils import build_pypgf, in_directory
 
 
 base = Path(__file__).parent.resolve()
-
-
-@contextmanager
-def in_directory(dirname):
-    pwd = Path.cwd()
-    os.chdir(dirname)
-    try:
-        yield
-    finally:
-        os.chdir(pwd)
 
 
 class TestSetupFigureClass:
@@ -151,21 +139,18 @@ class TestSetupFigureClass:
                     return tuple(map(float, line.split(",")))
 
         # Check the default (pgfutils.cfg) fill color is in use.
-        res = build_figure(str(dir), "default.py")
-        assert res.returncode == 0, "Failed to run test/sources/kwargs/default.py."
-        assert get_fill_color("tests/sources/kwargs/default.pypgf") == approx(
-            (0, 0, 1)
-        ), "Default background fill should be blue, (0, 0, 1)."
+        with build_pypgf(dir, "default.py") as res:
+            assert res.returncode == 0, f"Failed to run {dir / 'default.py'}."
+            assert get_fill_color(dir / "default.pypgf") == approx(
+                (0, 0, 1)
+            ), "Default background fill should be blue, (0, 0, 1)."
 
         # And now check we can override this using kwargs.
-        res = build_figure(str(dir), "overridden.py")
-        assert res.returncode == 0, "Failed to run test/sources/kwargs/overridden.py."
-        assert get_fill_color("tests/sources/kwargs/overridden.pypgf") == approx(
-            (1, 0, 0)
-        ), "Overridden background fill should be red, (1, 0, 0)."
-
-        # Done.
-        clean_dir(str(dir))
+        with build_pypgf(dir, "overridden.py") as res:
+            assert res.returncode == 0, f"Failed to run {dir / 'overridden.py'}."
+            assert get_fill_color("tests/sources/kwargs/overridden.pypgf") == approx(
+                (1, 0, 0)
+            ), "Overridden background fill should be red, (1, 0, 0)."
 
     def test_kwargs_rejects_unknown(self):
         """Test setup_figure() rejects unknown configuration options..."""
