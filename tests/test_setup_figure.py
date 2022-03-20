@@ -1,4 +1,6 @@
-import os.path
+from contextlib import contextmanager
+import os
+from pathlib import Path
 
 import matplotlib
 import numpy as np
@@ -9,7 +11,17 @@ from pgfutils import _config, _config_reset, setup_figure
 from .utils import build_figure, clean_dir
 
 
-base = os.path.normpath(os.path.dirname(__file__))
+base = Path(__file__).parent.resolve()
+
+
+@contextmanager
+def in_directory(dirname):
+    pwd = Path.cwd()
+    os.chdir(dirname)
+    try:
+        yield
+    finally:
+        os.chdir(pwd)
 
 
 class TestSetupFigureClass:
@@ -126,7 +138,7 @@ class TestSetupFigureClass:
 
     def test_kwargs_overrides(self):
         """Test setup_figure() kwargs override configuration file..."""
-        dir = os.path.join(base, "sources", "kwargs")
+        dir = base / "sources" / "kwargs"
 
         # Helper to parse a fill color from a pypgf file.
         def get_fill_color(fn):
@@ -139,21 +151,21 @@ class TestSetupFigureClass:
                     return tuple(map(float, line.split(",")))
 
         # Check the default (pgfutils.cfg) fill color is in use.
-        res = build_figure(dir, "default.py")
+        res = build_figure(str(dir), "default.py")
         assert res.returncode == 0, "Failed to run test/sources/kwargs/default.py."
         assert get_fill_color("tests/sources/kwargs/default.pypgf") == approx(
             (0, 0, 1)
         ), "Default background fill should be blue, (0, 0, 1)."
 
         # And now check we can override this using kwargs.
-        res = build_figure(dir, "overridden.py")
+        res = build_figure(str(dir), "overridden.py")
         assert res.returncode == 0, "Failed to run test/sources/kwargs/overridden.py."
         assert get_fill_color("tests/sources/kwargs/overridden.pypgf") == approx(
             (1, 0, 0)
         ), "Overridden background fill should be red, (1, 0, 0)."
 
         # Done.
-        clean_dir(dir)
+        clean_dir(str(dir))
 
     def test_kwargs_rejects_unknown(self):
         """Test setup_figure() rejects unknown configuration options..."""
@@ -236,3 +248,10 @@ class TestSetupFigureClass:
         w, h = matplotlib.rcParams["figure.figsize"]
         assert w == approx(margin)
         assert h == approx(0.4 * height)
+
+    def test_setup_pgfutilscfg_not_file(self, tmpdir):
+        """Check setup_figure() errors if pgfutils.cfg exists but is not a file..."""
+        tmpdir.mkdir("pgfutils.cfg")
+        with in_directory(Path(tmpdir)):
+            with raises(RuntimeError, match="exists but is not a file"):
+                setup_figure()

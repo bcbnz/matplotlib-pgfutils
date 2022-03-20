@@ -50,7 +50,6 @@ import importlib.abc
 import inspect
 import io
 import os
-import os.path
 import pathlib
 import re
 import string
@@ -355,13 +354,15 @@ class PgfutilsParser(configparser.ConfigParser):
         else:
             raise ValueError(f"Unknown tracking type {type}.")
 
-        # If the filename relative to one of these paths does not have to leave the
-        # directory (i.e., doesn't start with ..) then it must be within the directory.
-        fn = os.path.abspath(fn)
+        # If we can compute a relative path, it must be within the directory.
+        fn = pathlib.Path(fn).resolve()
         for path in paths:
-            path = os.path.abspath(path)
-            if not os.path.relpath(fn, path).startswith(".."):
-                return True
+            path = pathlib.Path(path).resolve()
+            try:
+                fn.relative_to(path)
+            except ValueError:
+                continue
+            return True
 
         # Not in any of the directories.
         return False
@@ -433,10 +434,11 @@ def _relative_if_subdir(fn):
         absolute path otherwise.
 
     """
-    rel = os.path.relpath(fn)
-    if rel.startswith(".."):
-        return os.path.abspath(fn)
-    return rel
+    fn = pathlib.Path(fn).resolve()
+    try:
+        return fn.relative_to(pathlib.Path.cwd())
+    except ValueError:
+        return fn
 
 
 def _file_tracker(to_wrap):
@@ -590,7 +592,9 @@ def _install_extra_file_trackers(trackers):
                 def __init__(self, filename, mode="r", **kwargs):
                     super().__init__(filename, mode=mode, **kwargs)
                     if mode == "r":
-                        _file_tracker.filenames.add(("r", filename))
+                        _file_tracker.filenames.add(
+                            ("r", _relative_if_subdir(filename))
+                        )
 
             netCDF4.Dataset = PgfutilsTrackedDataset
 
@@ -607,7 +611,7 @@ def _install_extra_file_trackers(trackers):
 
                     # And track them all.
                     for fn in files:
-                        _file_tracker.filenames.add(("r", fn))
+                        _file_tracker.filenames.add(("r", _relative_if_subdir(fn)))
 
             netCDF4.MFDataset = PgfutilsTrackedMFDataset
 
@@ -625,13 +629,13 @@ def add_dependencies(*args):
 
     Parameters
     ----------
-    fn : string
-        The filename of the dependency, relative to the top-level directory of
-        the project.
+    fn : path-like
+        The filename of the dependency, relative to the top-level directory of the
+        project.
 
     """
     for fn in args:
-        _file_tracker.filenames.add(("r", fn))
+        _file_tracker.filenames.add(("r", pathlib.Path(fn)))
 
 
 def _list_opened_files():
@@ -640,11 +644,11 @@ def _list_opened_files():
     Returns
     -------
     list
-        A list of tuples (mode, filename) of files in or under the current directory.
-        Entries with mode 'r' were opened for reading and are assumed to be dependencies
-        of the generated figure. Entries with mode 'w' were opened for writing and are
-        rasterised graphics included in the final figure. The list is sorted by mode and
-        then filename.
+        A list of tuples (mode, filename) of files in or under the current directory
+        where each filename is a pathlib.Path instance. Entries with mode 'r' were
+        opened for reading and are assumed to be dependencies of the generated figure.
+        Entries with mode 'w' were opened for writing and are rasterised graphics
+        included in the final figure. The list is sorted by mode and then filename.
 
     """
     return sorted(_file_tracker.filenames)
@@ -696,9 +700,12 @@ def setup_figure(
     _config_reset()
 
     # Load configuration from a local file if one exists.
-    if os.path.exists("pgfutils.cfg"):
-        _config.read("pgfutils.cfg")
-        _file_tracker.filenames.add(("r", "pgfutils.cfg"))
+    cfg_path = pathlib.Path("pgfutils.cfg")
+    if cfg_path.exists():
+        if not cfg_path.is_file():
+            raise RuntimeError("pgfutils.cfg exists but is not a file.")
+        _config.read(cfg_path)
+        _file_tracker.filenames.add(("r", cfg_path))
 
     # And anything given in the function call.
     if kwargs:
@@ -764,7 +771,7 @@ def setup_figure(
     # Custom TeX preamble.
     preamble = _config["pgfutils"]["preamble"]
     if _config["pgfutils"].getboolean("preamble_substitute"):
-        preamble = string.Template(preamble).substitute(basedir=os.path.abspath("."))
+        preamble = string.Template(preamble).substitute(basedir=str(pathlib.Path.cwd()))
     matplotlib.rcParams["pgf.preamble"] = preamble
 
     # Clear the existing lists of specific font names.
@@ -960,12 +967,11 @@ def save(figure=None):
         return
 
     # Look at the next frame up for the name of the calling script.
-    script = inspect.getfile(sys._getframe(1))
-    name, ext = os.path.splitext(script)
+    script = pathlib.Path(inspect.getfile(sys._getframe(1)))
 
     # The initial Matplotlib output file, and the final figure file.
-    mpname = name + ".pgf"
-    figname = name + ".pypgf"
+    mpname = script.with_suffix(".pgf")
+    figname = script.with_suffix(".pypgf")
 
     # Get Matplotlib to save it.
     figure.savefig(mpname)
@@ -974,7 +980,7 @@ def save(figure=None):
     # output our results.
     if "PGFUTILS_TRACK_FILES" in os.environ:
         # The files.
-        files = "\n".join([":".join(f) for f in _list_opened_files()])
+        files = "\n".join([f"{mode}:{fn}" for mode, fn in _list_opened_files()])
 
         # Figure out where to print it.
         dest = os.environ.get("PGFUTILS_TRACK_FILES") or "1"
@@ -1004,11 +1010,11 @@ def save(figure=None):
     # Add the appropriate directory prefix to all raster images
     # included via \pgfimage.
     if fix_raster_paths:
-        figdir = os.path.dirname(figname) or "."
+        figdir = figname.parent
 
         # Only apply this if the figure is not in the top-level directory.
-        if not os.path.samefile(figdir, os.curdir):
-            prefix = os.path.relpath(figdir)
+        if not figdir.samefile("."):
+            prefix = figdir.relative_to(pathlib.Path.cwd())
             expr = re.compile(r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)(.+?)}")
             repl = rf"\1{prefix}/\2}}"
             pp_funcs.append(lambda s: re.sub(expr, repl, s))
@@ -1034,13 +1040,13 @@ def save(figure=None):
                 outfile.write(", matplotlib-pgfutils v")
                 outfile.write(__version__)
                 outfile.write("\n%%  Script: ")
-                outfile.write(os.path.abspath(script))
+                outfile.write(str(script.resolve()))
                 outfile.write("\n")
 
             # Update the \input instructions.
             elif r"\input{<filename>.pgf}" in line:
                 outfile.write("%%   \\input{")
-                outfile.write(figname)
+                outfile.write(str(figname))
                 outfile.write("}\n")
 
             # If we're changing the figure to use the tikzpicture environment, we also
