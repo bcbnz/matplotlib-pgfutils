@@ -9,10 +9,6 @@ The general test environment is controlled by `requirements-test-apt.txt`
 that matplotlib is not included in the latter -- the job will install the
 version from the matrix it wants during the run.
 
-Also note we currently pin cartopy to 0.19.0 as the latest version (0.20.0 as
-of the time of writing) requires proj 8 which is not available in the Ubuntu
-LTS repositories.
-
 
 Locally running
 ---------------
