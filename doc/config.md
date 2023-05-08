@@ -360,6 +360,6 @@ drawing commands. As TikZ is a superset of PGF, this should work in most cases,
 although errors may occur in some figures.
 
 
-[1]: https://github.com/bcbnz/matplotlib-pgfutils/blob/master/extras/pgfutils.cfg
+[1]: https://github.com/bcbnz/matplotlib-pgfutils/blob/main/extras/pgfutils.cfg
 [2]: https://docs.python.org/library/configparser.html
 [3]: https://matplotlib.org/users/customizing.html

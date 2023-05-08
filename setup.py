@@ -12,10 +12,10 @@ with open("README.md", "r") as f:
     long_desc = f.read()
 
 # Turn relative links into absolute ones pointing
-# at the file in the master branch of the repository.
+# at the file in the main branch of the repository.
 long_desc = re.sub(
     r"(\[[^]]+]\()(?!http)(.+\))",
-    r"\1https://github.com/bcbnz/matplotlib-pgfutils/blob/master/\2",
+    r"\1https://github.com/bcbnz/matplotlib-pgfutils/blob/main/\2",
     long_desc,
 )
 

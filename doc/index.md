@@ -72,7 +72,7 @@ present somewhere in your filesystem (e.g., on a Linux system, they might be at
 `extras/examples` directory of the source or online [in the GitHub
 repository][3].
 
-[3]: https://github.com/bcbnz/matplotlib-pgfutils/tree/master/extras/examples
+[3]: https://github.com/bcbnz/matplotlib-pgfutils/tree/main/extras/examples
 
 
 License

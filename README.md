@@ -101,7 +101,7 @@ Unit testing
 ------------
 
 [![Test Status](https://github.com/bcbnz/matplotlib-pgfutils/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/bcbnz/matplotlib-pgfutils/actions/workflows/ci-tests.yml)
-[![codecov](https://codecov.io/gh/bcbnz/matplotlib-pgfutils/branch/master/graph/badge.svg)](https://codecov.io/gh/bcbnz/matplotlib-pgfutils)
+[![codecov](https://codecov.io/gh/bcbnz/matplotlib-pgfutils/branch/main/graph/badge.svg)](https://codecov.io/gh/bcbnz/matplotlib-pgfutils)
 
 Extensive unit tests are included in the tests/ directory of the source. Each
 commit to the source repository is automatically tested using GitHub actions.
