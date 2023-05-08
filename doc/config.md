@@ -4,8 +4,8 @@ Configuration
 Primary configuration is done through a configuration file. This should be
 named `pgfutils.cfg` and placed in the top-level directory, i.e., where you run
 the scripts from. An example configuration file containing the default settings
-is available in the extras/ directory of the source code, or can be viewed [on
-the GitHub repository][1].
+is available in the data/share/matplotlib-pgfutils/ directory of the source code, or can
+be viewed [on the GitHub repository][1].
 
 The configuration file is processed by the [configparser][2] module which uses
 a file structure similar to that of a Windows INI file.  Four sections can be
@@ -360,6 +360,6 @@ drawing commands. As TikZ is a superset of PGF, this should work in most cases,
 although errors may occur in some figures.
 
 
-[1]: https://github.com/bcbnz/matplotlib-pgfutils/blob/main/extras/pgfutils.cfg
+[1]: https://github.com/bcbnz/matplotlib-pgfutils/blob/main/data/share/matplotlib-pgfutils/pgfutils.cfg
 [2]: https://docs.python.org/library/configparser.html
 [3]: https://matplotlib.org/users/customizing.html

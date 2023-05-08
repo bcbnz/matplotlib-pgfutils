@@ -69,10 +69,10 @@ pgfutils comes with some examples which demonstrate its usage and integration
 into a build system. Depending on your installation method, these may be
 present somewhere in your filesystem (e.g., on a Linux system, they might be at
 `/usr/share/matplotlib-pgfutils/examples`). They can also be found in the
-`extras/examples` directory of the source or online [in the GitHub
-repository][3].
+`data/share/matplotlib-pgfutils/examples` directory of the source or online [in the
+GitHub repository][3].
 
-[3]: https://github.com/bcbnz/matplotlib-pgfutils/tree/main/extras/examples
+[3]: https://github.com/bcbnz/matplotlib-pgfutils/tree/main/data/share/matplotlib-pgfutils/examples
 
 
 License

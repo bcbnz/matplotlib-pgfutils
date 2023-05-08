@@ -75,7 +75,7 @@ pgfutils comes with some examples which demonstrate its usage and integration
 into a build system. Depending on your installation method, these may be
 present somewhere in your filesystem (e.g., on a Linux system, they might be at
 `/usr/share/matplotlib-pgfutils/examples`). They can also be found in the
-[extras/examples directory](extras/examples).
+[data/share/matplotlib-pgfutils/examples directory](data/share/matplotlib-pgfutils/examples).
 
 
 Documentation
@@ -94,7 +94,7 @@ in the doc/ directory of the source:
 * [Latexmk integration](doc/latexmk.md)
 
 An example configuration file showing the default settings is given in
-[extras/pgfutils.cfg](extras/pgfutils.cfg).
+[data/share/matplotlib-pgfutils/pgfutils.cfg](data/share/matplotlib-pgfutils/pgfutils.cfg).
 
 
 Unit testing

@@ -109,15 +109,14 @@ Loading installed support
 -------------------------
 
 The previous dependency-tracking code is included in the project source as
-`extras/latexmkrc`. If your install method copies this file into your system,
-it may be preferable to execute the installed version rather than
-copy-and-paste it into your `latexmkrc`. This means that, if a future version
-requires a modification to this code, it will be automatically updated and
-included in your project. The project `setup.py` installs it in the
-`share/matplotlib-pgfutils` directory of your installation location. Under
-Linux, this will generally be at `/usr/share/matplotlib-pgfutils/latexmkrc` for
-a system-wide install or `~/.local/share/matplotlib-pgfutils/latexmkrc` for a
-user-specific install.
+`data/share/matplotlib-pgfutils/latexmkrc`. If your install method copies this file into
+your system, it may be preferable to execute the installed version rather than
+copy-and-paste it into your `latexmkrc`. This means that, if a future version requires a
+modification to this code, it will be automatically updated and included in your
+project. The installation backend places it in the `share/matplotlib-pgfutils` directory
+of your installation location. Under Linux, this will generally be at
+`/usr/share/matplotlib-pgfutils/latexmkrc` for a system-wide install or
+`~/.local/share/matplotlib-pgfutils/latexmkrc` for a user-specific install.
 
 To load the installed copy of this code, insert the following into your
 `latexmkrc`:

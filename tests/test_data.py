@@ -3,12 +3,13 @@ from pathlib import Path
 from pgfutils import PgfutilsParser, _config, _config_reset
 
 
-extras_dir = Path(__file__).parent.parent.resolve() / "extras"
+base_dir = Path(__file__).parent.parent.resolve()
+share_dir = base_dir / "data" / "share" / "matplotlib-pgfutils"
 
 
-class TestExtrasClass:
-    def test_extras_config(self):
-        """Test default configuration in extras/ is correct..."""
+class TestDataClass:
+    def test_data_config(self):
+        """Test default configuration in data/ is correct..."""
         _config_reset()
 
         # Helper function to convert a config object to a dictionary.
@@ -23,12 +24,12 @@ class TestExtrasClass:
                 result[section] = conv
             return result
 
-        # Read the config file in extras/.
+        # Read the config file in data/.
         # Note we use the base class read() method here to avoid some extra
         # error checking in our custom parser which gets in the way of this
         # test being accurately performed.
-        extras = PgfutilsParser()
-        super(PgfutilsParser, extras).read(extras_dir / "pgfutils.cfg")
+        data = PgfutilsParser()
+        super(PgfutilsParser, data).read(share_dir / "pgfutils.cfg")
 
         # Compare to the default options.
-        assert to_dict(extras) == to_dict(_config)
+        assert to_dict(data) == to_dict(_config)

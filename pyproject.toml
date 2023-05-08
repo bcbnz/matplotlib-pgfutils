@@ -1,3 +1,40 @@
+[build-system]
+requires = ["flit_core"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "matplotlib-pgfutils"
+description = "Utilities for generating PGF figures from Matplotlib"
+license = {text = "BSD"}
+authors = [
+    {name = "Blair Bonnett", email="blair.bonnett@gmail.com"}
+]
+readme = "README.md"
+dependencies = ["matplotlib"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://matplotlib-pgfutils.readthedocs.io/"
+Repository = "https://github.com/bcbnz/matplotlib-pgfutils.git"
+"Issue Tracker" = "https://github.com/bcbnz/matplotlib-pgfutils/issues"
+
+[tool.flit.module]
+name = "pgfutils"
+dist-name = "matplotlib-pgfutils"
+
+[tool.flit.external-data]
+directory = "data"
+
+[tool.flit.sdist]
+exclude = [".editorconfig", ".flake8", ".github", ".gitignore", "readthedocs.yml"]
+
 [tool.isort]
 profile = "black"
 atomic = true

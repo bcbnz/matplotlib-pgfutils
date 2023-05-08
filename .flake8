@@ -1,5 +1,5 @@
 [flake8]
 max-line-length = 88
 per-file-ignores =
-  extras/examples/*:E402
+  data/share/matplotlib-pgfutils/examples/*:E402
   tests/sources/*:E402
