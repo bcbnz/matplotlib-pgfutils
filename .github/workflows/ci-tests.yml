@@ -14,14 +14,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.8", "3.10" ]
-        matplotlib-version: [ "3.3.0", "3.5.1" ]
+        python-version: [ "3.9", "3.11" ]
+        matplotlib-version: [ "3.5.3", "3.7.1" ]
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "${{ matrix.python-version }}"
           architecture: x64
@@ -39,7 +39,7 @@ jobs:
         run: pytest --cov-report=xml
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3
         with:
           files: coverage.xml
           flags: "Matplotlib-${{ matrix.matplotlib-version}}-Python-${{ matrix.python-version }}"
