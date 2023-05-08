@@ -1,4 +1,4 @@
-# Copyright 2018, 2019, 2020, 2021, 2022 Blair Bonnett
+# Copyright 2018, 2019, 2020, 2021, 2022, 2023 Blair Bonnett
 #
 # Redistribution and use in source and binary forms, with or without modification, are
 # permitted provided that the following conditions are met:
@@ -1027,7 +1027,6 @@ def save(figure=None):
 
     # Postprocess the figure, moving it into the final destination.
     with open(mpname, "r") as infile, open(figname, "w") as outfile:
-
         # Make some modifications to the header.
         line = infile.readline()
         while line[0] == "%":

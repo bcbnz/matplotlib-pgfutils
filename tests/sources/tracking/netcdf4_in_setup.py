@@ -8,6 +8,6 @@ import netCDF4
 
 
 ds = netCDF4.Dataset("netcdf4/sine.nc")
-plt.plot(ds["time"], ds["voltage"])
+plt.plot(ds["time"][:], ds["voltage"][:])
 
 save()
