@@ -64,9 +64,13 @@ select = [
   "W",    # pycodestyle warnings
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 combine-as-imports = true
 force-sort-within-sections = true
+
+[tool.ruff.lint.per-file-ignores]
+"data/**.py" = ["E402"]
+"tests/**.py" = ["E402"]
 
 
 #

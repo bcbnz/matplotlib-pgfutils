@@ -10,7 +10,6 @@ import pgfutils
 
 from .utils import build_pypgf
 
-
 srcdir = Path(__file__).parent / "sources" / "tracking"
 
 
@@ -307,9 +306,9 @@ class TestTrackingClass:
         # Run the script.
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir, "simple_binary_nonimage.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'simple_binary_nonimage.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'simple_binary_nonimage.py'} failed."
+            )
 
             npfn = srcdir / "test.npy"
             assert npfn.exists(), "Test output not written."
@@ -321,9 +320,9 @@ class TestTrackingClass:
         # Run the script.
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir, "simple_nonbinary.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'simple_nonbinary.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'simple_nonbinary.py'} failed."
+            )
 
             txtfn = srcdir / "test.txt"
             assert txtfn.exists(), "Test output not written."
@@ -334,9 +333,9 @@ class TestTrackingClass:
         """File tracking ignores openers that don't return file objects..."""
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir, "simple_nonfile.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'simple_nonfile.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'simple_nonfile.py'} failed."
+            )
 
             pngfn = srcdir / "test_nonfile.png"
             assert pngfn.exists(), "Test output not written."
@@ -358,9 +357,9 @@ class TestTrackingClass:
         """File tracking ignores files written outside top-level directory..."""
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir, "simple_nonproject.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'simple_nonproject.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'simple_nonproject.py'} failed."
+            )
 
             pngfn = Path(tempfile.gettempdir()) / "test_nonproject.png"
             assert pngfn.exists(), "Test output not written."
@@ -377,7 +376,7 @@ class TestTrackingClass:
         for script, expected in tests.items():
             # Run the script and check it succeeded.
             with build_pypgf(srcdir, script, env) as res:
-                assert res.returncode == 0, f"Running {srcdir/script} failed,"
+                assert res.returncode == 0, f"Running {srcdir / script} failed,"
 
                 # Check the output files are correct.
                 actual = set(res.stdout.strip().splitlines())
@@ -393,7 +392,7 @@ class TestTrackingClass:
         for script, expected in tests.items():
             # Run the script and check it succeeded.
             with build_pypgf(srcdir, script, env) as res:
-                assert res.returncode == 0, f"Running {srcdir/script} failed,"
+                assert res.returncode == 0, f"Running {srcdir / script} failed,"
 
                 # Check the output files are correct.
                 actual = set(res.stderr.strip().splitlines())
@@ -410,7 +409,7 @@ class TestTrackingClass:
         for script, expected in tests.items():
             # Run the script and check it succeeded.
             with build_pypgf(srcdir, script, env) as res:
-                assert res.returncode == 0, f"Running {srcdir/script} failed,"
+                assert res.returncode == 0, f"Running {srcdir / script} failed,"
 
                 # Check the expected dependencies are reported.
                 with open(tfn, "r") as f:
@@ -436,9 +435,9 @@ class TestTrackingClass:
 
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir, "netcdf4_in_setup.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'netcdf4_in_setup.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'netcdf4_in_setup.py'} failed."
+            )
             actual = set(res.stdout.strip().splitlines())
             expected = {
                 "r:netcdf4/sine.nc",
@@ -451,9 +450,9 @@ class TestTrackingClass:
 
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir / "netcdf4", "netcdf4.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'netcdf4' / 'netcdf4.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'netcdf4' / 'netcdf4.py'} failed."
+            )
             actual = set(res.stdout.strip().splitlines())
             expected = {"r:sine.nc", "r:pgfutils.cfg"}
             assert actual == expected
@@ -477,9 +476,9 @@ class TestTrackingClass:
 
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir / "netcdf4", "netcdf4_multi_explicit.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'netcdf4' / 'netcdf4_multi_explicit.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'netcdf4' / 'netcdf4_multi_explicit.py'} failed."
+            )
             actual = set(res.stdout.strip().splitlines())
             expected = {
                 "r:mftest0.nc",
@@ -495,9 +494,9 @@ class TestTrackingClass:
 
         env = {"PGFUTILS_TRACK_FILES": "1"}
         with build_pypgf(srcdir / "netcdf4", "netcdf4_multi_glob.py", env) as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'netcdf4' / 'netcdf4_multi_glob.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'netcdf4' / 'netcdf4_multi_glob.py'} failed."
+            )
             actual = set(res.stdout.strip().splitlines())
             expected = {
                 "r:mftest0.nc",
@@ -533,9 +532,9 @@ class TestTrackingClass:
         """File tracking can be enabled through configured environment variables..."""
         # Run the script.
         with build_pypgf(srcdir / "config_enabled", "config_enabled.py") as res:
-            assert (
-                res.returncode == 0
-            ), f"Running {srcdir / 'config_enabled' / 'config_enabled.py'} failed."
+            assert res.returncode == 0, (
+                f"Running {srcdir / 'config_enabled' / 'config_enabled.py'} failed."
+            )
 
             # Check the results are as expected.
             expected = {

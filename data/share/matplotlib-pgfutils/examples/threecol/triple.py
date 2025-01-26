@@ -3,12 +3,10 @@
 
 from pgfutils import save, setup_figure
 
-
 setup_figure(width=1, height=0.4, columns=3)
 
 from matplotlib import pyplot as plt
 import numpy as np
-
 
 t = np.linspace(0, 10, 400)
 s = 0.3 * t + 2.5 * np.cos(2 * np.pi * 0.85 * t) - 0.8

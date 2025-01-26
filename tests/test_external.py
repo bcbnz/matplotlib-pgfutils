@@ -7,7 +7,6 @@ import pytest
 
 from .utils import build_pypgf
 
-
 srcdir = Path(__file__).parent / "sources" / "external"
 
 
@@ -16,9 +15,9 @@ def test_cartopy():
     pytest.importorskip("cartopy", reason="cartopy not available for testing")
 
     with build_pypgf(srcdir, "cartopy_figure.py") as res:
-        assert (
-            res.returncode == 0
-        ), f"{srcdir / 'cartopy_figure.py'} could not be built."
+        assert res.returncode == 0, (
+            f"{srcdir / 'cartopy_figure.py'} could not be built."
+        )
 
 
 def test_seaborn():
@@ -30,6 +29,6 @@ def test_seaborn():
             # Due to an upstream Matplotlib bug.
             if "'NoneType' object has no attribute 'write'" in res.stderr:
                 pytest.xfail("https://github.com/mwaskom/seaborn/issues/2343")
-        assert (
-            res.returncode == 0
-        ), f"{srcdir / 'seaborn_figure.py'} could not be built."
+        assert res.returncode == 0, (
+            f"{srcdir / 'seaborn_figure.py'} could not be built."
+        )

@@ -5,7 +5,6 @@ from pathlib import Path
 
 from .utils import build_pypgf
 
-
 srcdir = Path(__file__).parent.resolve() / "sources" / "environment"
 
 
@@ -31,6 +30,6 @@ def test_environment_invalid():
     """Check invalid environment variable in configuration is rejected..."""
     with build_pypgf(srcdir / "invalid", "basic.py") as res:
         assert res.returncode != 0, "Configuration not rejected."
-        assert (
-            "Environment variables should be in the form" in res.stderr
-        ), "Incorrect message."
+        assert "Environment variables should be in the form" in res.stderr, (
+            "Incorrect message."
+        )

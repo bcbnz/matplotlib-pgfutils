@@ -3,14 +3,12 @@
 
 from pgfutils import save, setup_figure
 
-
 setup_figure(width=1, height=1)
 
 import pathlib
 
 from matplotlib import pyplot as plt
 import numpy as np
-
 
 datastr = pathlib.Path("scatter.csv").read_text()
 data = np.genfromtxt(datastr.splitlines(), delimiter=",", dtype=int)

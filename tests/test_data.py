@@ -5,7 +5,6 @@ from pathlib import Path
 
 from pgfutils import PgfutilsParser, _config, _config_reset
 
-
 base_dir = Path(__file__).parent.parent.resolve()
 share_dir = base_dir / "data" / "share" / "matplotlib-pgfutils"
 

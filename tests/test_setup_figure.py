@@ -11,7 +11,6 @@ from pgfutils import _config, _config_reset, setup_figure
 
 from .utils import build_pypgf, in_directory
 
-
 base = Path(__file__).parent.resolve()
 
 
@@ -144,9 +143,9 @@ class TestSetupFigureClass:
         # Check the default (pgfutils.cfg) fill color is in use.
         with build_pypgf(dir, "default.py") as res:
             assert res.returncode == 0, f"Failed to run {dir / 'default.py'}."
-            assert get_fill_color(dir / "default.pypgf") == approx(
-                (0, 0, 1)
-            ), "Default background fill should be blue, (0, 0, 1)."
+            assert get_fill_color(dir / "default.pypgf") == approx((0, 0, 1)), (
+                "Default background fill should be blue, (0, 0, 1)."
+            )
 
         # And now check we can override this using kwargs.
         with build_pypgf(dir, "overridden.py") as res:

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
+
 def pytest_itemcollected(item):
     """Use the test docstring (if available) as the node ID.
 

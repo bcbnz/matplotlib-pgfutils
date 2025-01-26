@@ -3,12 +3,10 @@
 
 from pgfutils import save, setup_figure
 
-
 setup_figure(width=1, height=1)
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
-
 
 ax = plt.axes(projection=ccrs.PlateCarree())
 ax.stock_img()

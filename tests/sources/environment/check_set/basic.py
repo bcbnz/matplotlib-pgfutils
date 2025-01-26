@@ -3,11 +3,9 @@
 
 from pgfutils import save, setup_figure
 
-
 setup_figure()
 
 import os
-
 
 name1 = os.environ.get("name1", "not set")
 name2 = os.environ.get("name2", "not set")

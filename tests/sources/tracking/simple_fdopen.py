@@ -3,7 +3,6 @@
 
 from pgfutils import _file_tracker, save, setup_figure
 
-
 setup_figure(width=1, height=1)
 
 import base64
@@ -11,7 +10,6 @@ import os
 
 from matplotlib import pyplot as plt
 import numpy as np
-
 
 t = np.linspace(0, 10, 201)
 s = np.sin(2 * np.pi * 0.5 * t)

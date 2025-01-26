@@ -8,7 +8,6 @@ from pytest import approx
 
 from pgfutils import DimensionError, _config, _config_reset
 
-
 base = Path(__file__).parent
 
 
@@ -31,9 +30,9 @@ class TestConfigClass:
         """Config parser allows rcParams in config file..."""
         _config_reset()
         _config.read(base / "sources" / "extra_rcparams.cfg")
-        assert not _config["rcParams"].getboolean(
-            "ytick.left"
-        ), "ytick.left is incorrect"
+        assert not _config["rcParams"].getboolean("ytick.left"), (
+            "ytick.left is incorrect"
+        )
         assert _config["rcParams"].getboolean("ytick.right"), "ytick.right is incorrect"
 
     def test_cfg_unknown_rcparams(self):

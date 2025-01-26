@@ -4,12 +4,10 @@
 # Set up the figure environment.
 from pgfutils import save, setup_figure
 
-
 setup_figure(width=0.9, height=0.4)
 
 from matplotlib import pyplot as plt
 import numpy as np
-
 
 # Generate square wave from a few terms of its Fourier series.
 f = 3

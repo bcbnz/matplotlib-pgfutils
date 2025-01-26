@@ -3,11 +3,9 @@
 
 from pgfutils import save, setup_figure
 
-
 setup_figure(width=1, height=1)
 
 import seaborn as sns
-
 
 sns.set()
 tips = sns.load_dataset("tips")

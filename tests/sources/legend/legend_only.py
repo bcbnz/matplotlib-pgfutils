@@ -3,12 +3,10 @@
 
 from pgfutils import save, setup_figure
 
-
 setup_figure(width=1, height=1)
 
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
-
 
 cmap = plt.cm.coolwarm
 custom_lines = [

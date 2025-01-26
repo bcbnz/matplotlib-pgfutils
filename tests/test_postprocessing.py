@@ -8,7 +8,6 @@ from pytest import approx
 
 from .utils import build_pypgf, build_tex
 
-
 srcdir = Path(__file__).parent / "sources"
 
 
@@ -23,9 +22,9 @@ def test_fix_raster_paths():
         assert res.returncode == 0, f"Building {dir / 'speckle.pypgf'} failed."
 
         with build_tex(dir, "document") as tex_res:
-            assert (
-                tex_res.returncode == 0
-            ), "Building tests/sources/fix_raster_paths/document.pdf failed."
+            assert tex_res.returncode == 0, (
+                "Building tests/sources/fix_raster_paths/document.pdf failed."
+            )
 
 
 def test_tracking_fix_raster_paths():
@@ -60,14 +59,14 @@ def test_tikzpicture():
         assert res.returncode == 0, f"Building {dir / 'square.pypgf'} failed."
 
         with build_tex(dir, "document_pgf") as tex_res:
-            assert (
-                tex_res.returncode != 0
-            ), "Document should have failed to built without the tikz package."
+            assert tex_res.returncode != 0, (
+                "Document should have failed to built without the tikz package."
+            )
 
         with build_tex(dir, "document_tikz") as tex_res:
-            assert (
-                tex_res.returncode == 0
-            ), "Document failed to build with the tikz package."
+            assert tex_res.returncode == 0, (
+                "Document failed to build with the tikz package."
+            )
 
 
 def test_legend_parameters():

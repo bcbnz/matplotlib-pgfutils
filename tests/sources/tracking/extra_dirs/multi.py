@@ -3,12 +3,10 @@
 
 from pgfutils import add_dependencies, save, setup_figure
 
-
 setup_figure(width=1, height=1)
 
 from matplotlib import pyplot as plt
 import numpy as np
-
 
 noise = np.load("../noise.npy")
 plt.imshow(noise)
