@@ -23,6 +23,7 @@ __version__ = "1.8.0.dev0"
 import ast
 import configparser
 import importlib.abc
+import importlib.util
 import inspect
 import io
 import os
