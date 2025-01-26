@@ -6,6 +6,7 @@ SPDX-License-Identifier: BSD-3-Clause
 pgfutils
 ========
 
+[![REUSE status](https://api.reuse.software/badge/github.com/bcbnz/matplotlib-pgfutils)](https://api.reuse.software/info/github.com/bcbnz/matplotlib-pgfutils)
 [![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
 
 The [Portable Graphics Format (PGF)][1] is a language for producing vector
