@@ -88,8 +88,8 @@ class TestColorClass:
 
         # Check they are accepted. The parser always returns colors as tuples.
         for color in colors:
-            list_c = list(color)
-            tuple_c = tuple(color)
+            list_c = color.tolist()
+            tuple_c = tuple(list_c)
             _config.read_kwargs(figure_background=str(list_c[:-1]))
             assert _config["pgfutils"].getcolor("figure_background") == tuple_c
             _config.read_kwargs(axes_background=str(tuple_c[:-1]))
@@ -123,8 +123,8 @@ class TestColorClass:
 
         # Check they are accepted. The parser always returns colors as tuples.
         for color in colors:
-            list_c = list(color)
-            tuple_c = tuple(color)
+            list_c = color.tolist()
+            tuple_c = tuple(list_c)
             _config.read_kwargs(figure_background=str(list_c))
             assert _config["pgfutils"].getcolor("figure_background") == tuple_c
             _config.read_kwargs(axes_background=str(tuple_c))
