@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: BSD-3-Clause
+
 from pathlib import Path
 
 from .utils import build_pypgf

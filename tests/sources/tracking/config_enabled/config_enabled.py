@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: BSD-3-Clause
+
 from pgfutils import add_dependencies, save, setup_figure
 
 

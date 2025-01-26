@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: 0BSD
+
 # TeX -> PDF with no intermediate stages.
 $pdf_mode = 1;
 $dvi_mode = $postscript_mode = 0;

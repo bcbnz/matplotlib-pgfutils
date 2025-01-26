@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: 0BSD
+
 default: twocol.pdf
 
 twocol.pdf: twocol.tex single.pypgf double.pypgf

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: Blair Bonnett
+SPDX-License-Identifier: BSD-3-Clause
+-->
+
 pgfutils
 ========
 
@@ -121,13 +126,13 @@ License
 -------
 
 pgfutils is released under the three-clause BSD license. The terms of this
-license can be found in the LICENSE file in the source, or online at
+license can be found in the LICENSES/BSD-3-Clause.txt file in the source, or online at
 https://opensource.org/licenses/BSD-3-Clause
 
 The Cotham Sans font used in some unit tests is copyright (c) 2015 Sebastien
 Sanfilippo and is licensed under the SIL Open Font License, Version 1.1. The
-license can be found in the source at tests/sources/fonts/Cotham/OFL.txt or
-online at https://scripts.sil.org/OFL and the font itself can be found at
+license can be found in the source at LICENSES/OFL-1.1.txt or online at
+https://scripts.sil.org/OFL and the font itself can be found at
 https://github.com/sebsan/Cotham
 
 

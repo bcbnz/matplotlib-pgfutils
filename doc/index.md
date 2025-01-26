@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: Blair Bonnett
+SPDX-License-Identifier: BSD-3-Clause
+-->
+
 The [Portable Graphics Format (PGF)][1] is a language for producing vector
 graphics within TeX documents. There is also a higher-level language TikZ (TikZ
 ist kein Zeichenprogramm -- TikZ is not a drawing program) which uses PGF.

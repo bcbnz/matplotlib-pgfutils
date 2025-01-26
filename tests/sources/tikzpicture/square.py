@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Set up the figure environment.
 from pgfutils import save, setup_figure
 

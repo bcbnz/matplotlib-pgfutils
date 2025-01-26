@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: BSD-3-Clause
+
 from pgfutils import _file_tracker, save, setup_figure
 
 

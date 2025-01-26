@@ -1,0 +1,6 @@
+version = 1
+
+[[annotations]]
+path = "requirements-*.txt"
+SPDX-FileCopyrightText = "Blair Bonnett"
+SPDX-License-Identifier = "0BSD"

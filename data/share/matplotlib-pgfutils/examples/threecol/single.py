@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: 0BSD
+
 from pgfutils import save, setup_figure
 
 

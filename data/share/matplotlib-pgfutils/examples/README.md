@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: Blair Bonnett
+SPDX-License-Identifier: BSD-3-Clause
+-->
+
 matplotlib-pgfutils examples
 ============================
 

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: BSD-3-Clause
+
 from matplotlib.colors import get_named_colors_mapping
 import pytest
 

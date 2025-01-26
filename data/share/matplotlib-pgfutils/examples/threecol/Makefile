@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: 0BSD
+
 default: threecol.pdf
 
 threecol.pdf: threecol.tex single.pypgf double.pypgf triple.pypgf

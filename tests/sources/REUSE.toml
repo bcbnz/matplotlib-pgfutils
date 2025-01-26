@@ -1,0 +1,16 @@
+version = 1
+
+[[annotations]]
+path = "**/*.csv"
+SPDX-FileCopyrightText = "Blair Bonnett"
+SPDX-License-Identifier = "0BSD"
+
+[[annotations]]
+path = "**/*.nc"
+SPDX-FileCopyrightText = "Blair Bonnett"
+SPDX-License-Identifier = "0BSD"
+
+[[annotations]]
+path = "**/*.npy"
+SPDX-FileCopyrightText = "Blair Bonnett"
+SPDX-License-Identifier = "0BSD"

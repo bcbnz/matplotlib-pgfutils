@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: 0BSD
+#
 site_name: matplotlib-pgfutils
 docs_dir: doc
 site_dir: build/doc

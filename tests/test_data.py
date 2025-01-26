@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: BSD-3-Clause
+
 from pathlib import Path
 
 from pgfutils import PgfutilsParser, _config, _config_reset
