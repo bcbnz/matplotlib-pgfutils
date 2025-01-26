@@ -512,7 +512,7 @@ class ImportTracker(importlib.abc.MetaPathFinder):
         self._avoid_recursion.remove(fullname)
 
         # If it has an origin in one of our tracked dirs, log it.
-        if spec is not None and spec.origin is not None:
+        if spec is not None and spec.origin is not None and spec.origin != "built-in":
             global _config
             if _config.in_tracking_dir("import", spec.origin):
                 _file_tracker.filenames.add(("r", _relative_if_subdir(spec.origin)))
