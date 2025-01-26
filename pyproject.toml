@@ -1,46 +1,73 @@
-[build-system]
-requires = ["flit_core"]
-build-backend = "flit_core.buildapi"
-
 [project]
 name = "matplotlib-pgfutils"
 description = "Utilities for generating PGF figures from Matplotlib"
-license = {text = "BSD"}
-authors = [
-    {name = "Blair Bonnett", email="blair.bonnett@gmail.com"}
-]
-readme = "README.md"
-dependencies = ["matplotlib"]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python",
-    "Topic :: Scientific/Engineering :: Visualization",
-]
 dynamic = ["version"]
+readme = {file = "README.md", content-type="text/markdown"}
+license = "BSD-3-Clause"
+requires-python = ">=3.11"
+dependencies = [
+  "matplotlib>=3.7.0"
+]
 
 [project.urls]
 Documentation = "https://matplotlib-pgfutils.readthedocs.io/"
-Repository = "https://github.com/bcbnz/matplotlib-pgfutils.git"
-"Issue Tracker" = "https://github.com/bcbnz/matplotlib-pgfutils/issues"
+Repository = "https://github.com/bcbnz/matplotlib-pgfutils/"
+Issues = "https://github.com/bcbnz/matplotlib-pgfutils/issues"
 
-[tool.flit.module]
-name = "pgfutils"
-dist-name = "matplotlib-pgfutils"
+[project.optional-dependencies]
+dev = [
+  "matplotlib-pgfutils[doc]",
+  "matplotlib-pgfutils[test]",
+  "ruff",
+]
+doc = [
+  "mkdocs",
+]
+test = [
+  "pytest",
+  "pytest-cov",
+]
 
-[tool.flit.external-data]
-directory = "data"
 
-[tool.flit.sdist]
-exclude = [".editorconfig", ".flake8", ".github", ".gitignore", "readthedocs.yml"]
+#
+# Build tools.
+#
 
-[tool.isort]
-profile = "black"
-atomic = true
-combine_as_imports = true
-force_sort_within_sections = true
-lines_after_imports = 2
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["pgfutils"]
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+
+
+#
+# Linting.
+#
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "I",    # isort
+  "NPY",  # NumPy-specific checks
+  "W",    # pycodestyle warnings
+]
+
+[tool.ruff.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+
+
+#
+# Testing
+#
 
 [tool.pytest.ini_options]
 addopts = "-v --cov=pgfutils --cov-report html --cov-report term --cov-branch"

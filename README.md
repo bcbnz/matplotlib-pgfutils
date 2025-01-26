@@ -1,6 +1,8 @@
 pgfutils
 ========
 
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
+
 The [Portable Graphics Format (PGF)][1] is a language for producing vector
 graphics within TeX documents. There is also a higher-level language TikZ (TikZ
 ist kein Zeichenprogramm -- TikZ is not a drawing program) which uses PGF.
@@ -54,15 +56,13 @@ save()
 Requirements
 ------------
 
-pgfutils follows [NEP29][3] when determining supported Python versions. Any minor
-version of Python released within the 42 months prior to a pgfutils release is
-supported, with a minimum of 2 minor versions. As of pgfutils 1.8.0, this means Python
-3.8 or later.
+pgfutils follows [SPEC0][3] when determining supported Python versions. Any minor
+version of Python released within the 3 years prior to a pgfutils release is
+supported. As of January 2025, this means Python 3.11 or later.
 
 The only required external dependency is Matplotlib. Any minor version of Matplotlib
-which was first released within the 24 months prior to a pgfutils release is supported,
-with a minimum of 2 minor versions. As of pgfutils 1.8.0, this means Matplotlib 3.3.0 or
-later.
+which was first released within the 24 months prior to a pgfutils release is supported.
+As of January 2025, this means Matplotlib 3.7.0 or later.
 
 Older versions of Python or Matplotlib may work, but are not tested and are not
 supported.
@@ -133,7 +133,7 @@ https://github.com/sebsan/Cotham
 
 [1]: https://github.com/pgf-tikz/pgf
 [2]: https://matplotlib.org/
-[3]: https://numpy.org/neps/nep-0029-deprecation_policy.html
+[3]: https://scientific-python.org/specs/spec-0000
 [4]: https://codecov.io/gh/bcbnz/matplotlib-pgfutils
 [5]: https://pytest.org/
 [6]: https://coverage.readthedocs.io/
