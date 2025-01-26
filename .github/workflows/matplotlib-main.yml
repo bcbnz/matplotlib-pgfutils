@@ -14,18 +14,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Decide on Python version
-        id: mpl-main-nep29
-        uses: mstimberg/github-calc-nep29@v0.2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: "${{ steps.mpl-main-nep29.outputs.max-python }}"
+          python-version: 3.11
           architecture: x64
 
       - name: Install system libraries
@@ -47,7 +41,8 @@ jobs:
         run: pytest --cov-report=xml
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v5
         with:
           files: coverage.xml
           name: "Matplob main branch ${{ steps.mpl-main-version.outputs.matplotlib-version }}"
+          token: ${{ secrets.CODECOV_TOKEN }}
