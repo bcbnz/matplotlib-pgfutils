@@ -25,13 +25,8 @@ jobs:
           python-version: 3.x
           architecture: x64
 
-      - name: Download ruff
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: version
-
       - name: Lint
-        run: ruff check
+        uses: astral-sh/ruff-action@v3
 
       - name: Check formatting
         run: ruff format --check
