@@ -45,6 +45,71 @@ class ColorError(ValueError):
     pass
 
 
+# Recognise pieces of a dimension string.
+dimension_pieces = re.compile(r"^\s*(?P<size>\d+(?:\.\d*)?)\s*(?P<unit>.+?)?\s*$")
+
+# Divisors to convert from a unit to inches.
+dimension_divisor = {
+    "cm": 2.54,
+    "centimetre": 2.54,
+    "centimeter": 2.54,
+    "centimetres": 2.54,
+    "centimeters": 2.54,
+    "mm": 25.4,
+    "millimetre": 25.4,
+    "millimeter": 25.4,
+    "millimetres": 25.4,
+    "millimeters": 25.4,
+    "in": 1,
+    "inch": 1,
+    "inches": 1,
+    "pt": 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
+    "point": 72.27,
+    "points": 72.27,
+}
+
+
+def parse_dimension(spec: str) -> float:
+    """Parse a dimension specification to TeX points.
+
+    Matplotlib uses inches for physical sizes. This function allows other units to be
+    specified and converts them to inches. Note that points are assumed to be TeX points
+    (72.27 per inch) rather than Postscript points (72 per inch).
+
+    Parameters
+    ----------
+    spec
+        A dimension specification. This should be in the format "<value><unit>" where
+        the unit can be any of the keys from the `dimension_divisor` dictionary.
+        Whitespace is allowed between the value and unit. If no unit is given, it is
+        assumed to be inches.
+
+    Returns
+    -------
+    float
+        The dimension in inches.
+
+    """
+    match = dimension_pieces.match(spec)
+    if not match:
+        raise DimensionError(f"could not parse {spec} as a dimension")
+
+    # Get the components.
+    groups = match.groupdict()
+    size = float(groups["size"])
+    unit: str = (groups.get("unit") or "").lower()
+
+    # Assume already in inches.
+    if not unit:
+        return size
+
+    # Convert with the divisor.
+    factor = dimension_divisor.get(unit)
+    if factor is None:
+        raise DimensionError(f"unknown unit in {spec}")
+    return size / factor
+
+
 class PgfutilsParser(configparser.ConfigParser):
     """Custom configuration parser with Matplotlib dimension and color support."""
 
@@ -136,63 +201,6 @@ class PgfutilsParser(configparser.ConfigParser):
         # And then read the dictionary in.
         return self.read_dict(d)
 
-    def parsedimension(self, dim):
-        """Convert a dimension to inches.
-
-        The dimension should be in the format '<value><unit>', where the unit can be
-        'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is assumed to be in
-        inches. Note that points refer to TeX points (72.27 per inch) rather than
-        Postscript points (72 per inch).
-
-        Parameters
-        ----------
-        dim: string
-            The dimension to parse.
-
-        Returns
-        -------
-        float: The dimension in inches.
-
-        Raises
-        ------
-        DimensionError:
-            The dimension is empty or not recognised.
-
-        """
-        # Need a string.
-        if dim is None:
-            raise DimensionError("Cannot be set to an empty value.")
-
-        # Check for an empty string.
-        dim = dim.strip().lower()
-        if not dim:
-            raise DimensionError("Cannot be set to an empty value.")
-
-        # Try to parse it.
-        m = self._dimre.match(dim)
-        if not m:
-            raise DimensionError(f"Could not parse {dim} as a dimension.")
-
-        # Pull out the pieces.
-        groups = m.groupdict()
-        size = float(groups["size"])
-        unit = groups.get("unit", "") or ""
-        unit = unit.lower()
-
-        # No unit: already in inches.
-        if not unit:
-            return size
-
-        # Pick out the divisor to convert into inches.
-        factor = self._dimconv.get(unit, None)
-
-        # Unknown unit.
-        if factor is None:
-            raise DimensionError(f"Unknown unit {unit}.")
-
-        # Do the conversion.
-        return size / factor
-
     def getdimension(self, section, option, **kwargs):
         """Return a configuration entry as a dimension in inches.
 
@@ -222,7 +230,7 @@ class PgfutilsParser(configparser.ConfigParser):
         # And parse it; modify any parsing exception to include
         # the section and option we were parsing.
         try:
-            return self.parsedimension(dim)
+            return parse_dimension(dim)
         except DimensionError as e:
             raise DimensionError(f"{section}.{option}: {e}") from None
 
@@ -848,7 +856,7 @@ def setup_figure(
     try:
         w = float(width)
     except ValueError:
-        w = _config.parsedimension(width)
+        w = parse_dimension(width)
     else:
         w *= available_width
 
@@ -856,7 +864,7 @@ def setup_figure(
     try:
         h = float(height)
     except ValueError:
-        h = _config.parsedimension(height)
+        h = parse_dimension(height)
     else:
         h *= _config["tex"].getdimension("text_height")
 
