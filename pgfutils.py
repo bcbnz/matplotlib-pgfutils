@@ -10,7 +10,7 @@ they can be processed via Makefiles) in order to get consistent-looking plots.
 
 """
 
-__version__ = "1.8.0.dev0"
+__version__ = "2.0.0.dev0"
 
 # We don't import Matplotlib here as this brings in NumPy. In turn, NumPy caches a
 # reference to the io.open() method as part of its data loading functions. This means we
