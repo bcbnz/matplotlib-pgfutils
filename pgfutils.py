@@ -21,8 +21,10 @@ __version__ = "2.0.0.dev0"
 # separately in different functions.
 
 import ast
+from collections.abc import Sequence
 import configparser
 import importlib.abc
+from importlib.machinery import ModuleSpec
 import importlib.util
 import inspect
 import io
@@ -31,6 +33,7 @@ import pathlib
 import re
 import string
 import sys
+import types
 
 
 class DimensionError(ValueError):
@@ -147,8 +150,8 @@ class PgfutilsParser(configparser.ConfigParser):
         """
 
         def get_options():
-            options = set()
-            for sect, opts in self._sections.items():
+            options: set[str] = set()
+            for sect, opts in self._sections.items():  # type:ignore[attr-defined]
                 if sect == "rcParams":
                     continue
                 options.update(f"{sect}.{opt}" for opt in opts.keys())
@@ -172,13 +175,13 @@ class PgfutilsParser(configparser.ConfigParser):
     def read_kwargs(self, **kwargs):
         """Read configuration options from keyword arguments."""
         # Dictionary of values to load.
-        d = {}
+        d: dict[str, dict[str, str]] = {}
 
         # Option -> section lookup table.
         lookup = {}
 
         # Go through all existing options.
-        for section, options in self._sections.items():
+        for section, options in self._sections.items():  # type:ignore[attr-defined]
             # Can't specify rcParams through kwargs.
             if section == "rcParams":
                 continue
@@ -342,9 +345,9 @@ class PgfutilsParser(configparser.ConfigParser):
         # If we can compute a relative path, it must be within the directory.
         fn = pathlib.Path(fn).resolve()
         for path in paths:
-            path = pathlib.Path(path).resolve()
+            resolved = pathlib.Path(path).resolve()
             try:
-                fn.relative_to(path)
+                fn.relative_to(resolved)
             except ValueError:
                 continue
             return True
@@ -498,10 +501,14 @@ class ImportTracker(importlib.abc.MetaPathFinder):
 
     def __init__(self):
         super().__init__()
-        self._avoid_recursion = set()
-        self.imported = set()
+        self._avoid_recursion: set[str] = set()
 
-    def find_spec(self, fullname, path, target=None):
+    def find_spec(
+        self,
+        fullname: str,
+        path: Sequence[str] | None,
+        target: types.ModuleType | None = None,
+    ) -> ModuleSpec | None:
         # According to PEP451, this is mostly intended for a reload. I can't see a way
         # (without calling importlib._bootstrap._find_spec, which should not be imported
         # according to the note at the top of the module) to pass this information on.
@@ -553,7 +560,7 @@ def _install_standard_file_trackers():
     sys.meta_path.insert(0, ImportTracker())
 
 
-def _install_extra_file_trackers(trackers):
+def _install_extra_file_trackers(trackers: list[str]):
     """Internal: install requested extra file trackers.
 
     Parameters
@@ -729,7 +736,7 @@ def setup_figure(
     # matplotlib.is_interactive()) don't appear to propagate when IPython runs a script
     # so we can't test those.
     try:
-        ipython = get_ipython()
+        ipython = get_ipython()  # type:ignore[name-defined]
     except NameError:
         pass
     else:
