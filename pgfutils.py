@@ -653,7 +653,12 @@ _interactive = False
 
 
 def setup_figure(
-    width=1.0, height=1.0, columns=None, margin=False, full_width=False, **kwargs
+    width: float | str = 1.0,
+    height: float | str = 1.0,
+    columns: int | None = None,
+    margin: bool = False,
+    full_width: bool = False,
+    **kwargs,
 ):
     """Set up matplotlib figures for PGF output.
 
@@ -663,21 +668,20 @@ def setup_figure(
 
     Parameters
     ----------
-    width, height : float or string
+    width, height
         If a float, the fraction of the corresponding text width or height that the
         figure should take up. If a string, a dimension in centimetres (cm), millimetres
         (mm), inches (in) or points (pt). For example, '3in' or '2.5 cm'.
-    columns : integer, optional
+    columns
         The number of columns the figure should span. This should be between 1 and the
         total number of columns in the document (as specified in the configuration). A
-        value of None corresponds to spanning all columns.  Any other value results in a
-        ValueError being raised.
-    margin : Boolean, default False
+        value of None corresponds to spanning all columns.
+    margin
         If True, a margin figure (i.e., one to fit within the margin notes in the
         document) is generated. If the width is a fraction, it is treated as a fraction
         of the marginpar_width configuration setting. The height is still treated as a
         fraction of the text height. The columns setting is ignored if this is True.
-    full_width : Boolean, default False
+    full_width
         If True, a full-width figure, i.e., one spanning the main text, the margin
         notes, and the separator between them, is generated. A fractional width is
         treated relative to the full width. The height is still treated as a fraction of
