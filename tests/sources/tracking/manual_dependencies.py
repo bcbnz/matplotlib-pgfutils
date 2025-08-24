@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-from pgfutils import add_dependencies, save, setup_figure
+from pgfutils import save, setup_figure, tracker
 
 setup_figure(width=1, height=1)
 
@@ -11,7 +11,7 @@ import numpy as np
 t = np.linspace(0, 10, 201)
 s = np.sin(2 * np.pi * 0.5 * t)
 
-add_dependencies("data.file", "another.file")
+tracker.add_dependencies("data.file", "another.file")
 
 plt.plot(t, s)
 save()

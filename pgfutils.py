@@ -12,17 +12,11 @@ they can be processed via Makefiles) in order to get consistent-looking plots.
 
 __version__ = "2.0.0.dev0"
 
-# We don't import Matplotlib here as this brings in NumPy. In turn, NumPy caches a
-# reference to the io.open() method as part of its data loading functions. This means we
-# can't (reliably) wrap all loading functions if we're asked to track opened files.
-# Instead, the tracking is installed in setup_figure() before the first import of
-# Matplotlib (assuming the user doesn't use our internal functions). Python's caching of
-# imported modules means there should be minimal impact from importing Matplotlib
-# separately in different functions.
-
 import ast
+import builtins
 from collections.abc import Sequence
 import configparser
+import functools
 import importlib.abc
 from importlib.machinery import ModuleSpec
 import importlib.util
@@ -34,6 +28,158 @@ import re
 import string
 import sys
 import types
+from typing import Callable
+
+
+class Tracker(importlib.abc.MetaPathFinder):
+    """Track files that are read, written or imported.
+
+    This can then be used for generating dependency lists. Note that the tracker does
+    not filter the files; that is up to the user.
+
+    Note that any imports that occur prior to the tracker being installed will not be
+    tracked. Any code which loads a file opener prior to it being wrapped for tracking
+    will also avoid tracking.
+
+    """
+
+    # Files that have imported.
+    imported: set[Path]
+
+    # Files that were opened in a read mode.
+    read: set[Path]
+
+    # Files that were explicitly added as dependencies.
+    explicit_dependencies: set[Path]
+
+    # Files that were opened in a write mode.
+    written: set[Path]
+
+    # For avoid recursion when tracking imports.
+    _avoid_recursion: set[str]
+
+    def __init__(self):
+        super().__init__()
+        self._avoid_recursion = set()
+        self.imported = set()
+        self.read = set()
+        self.explicit_dependencies = set()
+        self.written = set()
+        sys.meta_path.insert(0, self)
+
+    def add_dependencies(self, *args: os.PathLike[str] | str):
+        """Add a file dependency for the current figure.
+
+        In most situations, the in-built file tracking should suffice. However, some
+        files can be missed (for example, if a library you are using has its file
+        opening routines in a compiled extension rather than using Python functions).
+        This function can be used to manually add these files to the dependencies of the
+        current figure.
+
+        Parameters
+        ----------
+        *args
+            Filenames to add as dependencies. Relative filenames will be expanded from
+            the current working directory.
+
+        """
+        for fn in args:
+            self.explicit_dependencies.add(Path(fn).resolve())
+
+    def find_spec(
+        self,
+        fullname: str,
+        path: Sequence[str] | None,
+        target: types.ModuleType | None = None,
+    ) -> ModuleSpec | None:
+        # According to PEP451, this is mostly intended for a reload. I can't see a way
+        # (without calling importlib._bootstrap._find_spec, which should not be imported
+        # according to the note at the top of the module) to pass this information on.
+        # Hence, lets skip tracking in this case.
+        if target is not None:  # pragma: no cover
+            return None
+
+        # We use importlib to find the actual spec, so we need to avoid recursing when
+        # this finder is called again.
+        if fullname in self._avoid_recursion:
+            return None
+
+        # Find the spec.
+        self._avoid_recursion.add(fullname)
+        spec = importlib.util._find_spec_from_path(fullname, path)
+        self._avoid_recursion.remove(fullname)
+
+        # If it has an origin in one of our tracked dirs, log it.
+        if spec is not None and spec.origin is not None and spec.origin != "built-in":
+            self.imported.add(spec.origin)
+
+        # And return the result.
+        return spec
+
+    def wrap_file_opener[**P, R](self, opener: Callable[P, R]) -> Callable[P, R]:
+        """Wrap a function which opens files for tracking.
+
+        To be trackable, the objects returned by `opener` should be instances of
+        `io.IOBase` which provide a `name` property giving the filename. If the objects
+        `writable` method returns True, the filename is added to the `written` set, and
+        otherwise if the `readable` method returns True the filename is added to the
+        `read` set. Note that this means files opened in `r+` or append modes are only
+        added to `written`.
+
+        Parameters
+        ----------
+        opener
+            A function which opens files.
+
+        Returns
+        -------
+        wrapped_opener
+            A wrapper around the opener which takes the same inputs and returns the same
+            output, but tracks the filenames it is used for.
+
+        """
+
+        @functools.wraps(opener)
+        def wrapper(*args, **kwargs):
+            # Defer opening to the wrapped function.
+            file = opener(*args, **kwargs)
+
+            # Only deal with IO objects that give us the filename.
+            if not isinstance(file, io.IOBase):
+                return file
+            filename = getattr(file, "name")
+            if filename is None:
+                return file
+
+            # Integers indicate file objects that were created from descriptors (e.g.,
+            # opened with the low-level os.open() and then wrapped with os.fdopen()).
+            # There is no reliable way to retrieve the filename; on Linux, the command
+            # 'readlink /proc/self/fd/N' can be used provided it hasn't been
+            # renamed/deleted since.  I'm leaving this as unimplemented until I find an
+            # actual usecase.
+            if isinstance(filename, int):
+                return file
+
+            # Writable modes include r+ or append modes; treat these solely as writes.
+            if file.writable():
+                self.written.add(Path(filename).resolve())
+            elif file.readable():
+                self.read.add(Path(filename).resolve())
+
+            return file
+
+        return wrapper
+
+
+# Create a tracker and start tracking from common locations.
+tracker = Tracker()
+builtins.open = tracker.wrap_file_opener(builtins.open)
+io.open = tracker.wrap_file_opener(io.open)
+
+# Now we can import Matplotlib. We couldn't do so earlier as it brings in NumPy, which
+# in turn caches references to io.open() and so we prevent us reliably tracking data
+# files it opens.
+import matplotlib  # noqa: E402
 
 
 class DimensionError(ValueError):
@@ -262,8 +408,6 @@ class PgfutilsParser(configparser.ConfigParser):
             The value could not be interpreted as a color.
 
         """
-        import matplotlib
-
         # Retrieve the string value. Empty values are interpreted as none.
         value = self.get(section, option, **kwargs).strip() or "none"
 
@@ -429,135 +573,6 @@ def _relative_if_subdir(fn):
         return fn
 
 
-def _file_tracker(to_wrap):
-    """Internal: install an opened file tracker.
-
-    To be trackable, the given callable should return an instance of a subclass of
-    `io.IOBase`. If its `writable` method returns True, it is assumed to be an output
-    file, otherwise if its `readable` method returns True it is assumed to be an input.
-
-    The docstring, name etc. of the given callable are copied to the wrapper function
-    that performs the tracking.
-
-    The set of files that have been opened so far are stored in the `filenames`
-    attribute of this function. In general, use the _list_opened_files() method.
-
-    Parameters
-    ----------
-    to_wrap: callable
-        The callable to install the tracker around.
-
-    Returns
-    -------
-    Wrapper function.
-
-    """
-    global _config
-
-    import functools
-
-    @functools.wraps(to_wrap)
-    def wrapper(*args, **kwargs):
-        # Defer opening to the real function.
-        file = to_wrap(*args, **kwargs)
-
-        # Only attempt to track files implemented as standard IO objects.
-        if not isinstance(file, io.IOBase):
-            return file
-
-        # Integers indicate file objects that were created from descriptors (e.g.,
-        # opened with the low-level os.open() and then wrapped with os.fdopen()). There
-        # is no reliable way to retrieve the filename; on Linux, the command 'readlink
-        # /proc/self/fd/N' can be used provided it hasn't been renamed/deleted since.
-        # I'm leaving this as unimplemented until I find an actual usecase.
-        if isinstance(file.name, int):
-            return file
-
-        # If a file is writeable; this includes files opened in r+ or append modes. We
-        # assume these can't be dependencies.
-        if file.writable():
-            # Does it match the filename pattern used by the PGF backend for rasterised
-            # parts of the image being saved as PNGs?
-            if re.match(r"^.+-img\d+.png$", file.name):
-                _file_tracker.filenames.add(("w", _relative_if_subdir(file.name)))
-
-        # Should always be readable in this case, but check anyway.
-        elif file.readable() and _config.in_tracking_dir("data", file.name):
-            _file_tracker.filenames.add(("r", _relative_if_subdir(file.name)))
-
-        # Done.
-        return file
-
-    # Return the wrapper function.
-    return wrapper
-
-
-# Initialise the set of opened files.
-_file_tracker.filenames = set()
-
-
-class ImportTracker(importlib.abc.MetaPathFinder):
-    """Import finder which tracks imported files in configured paths."""
-
-    def __init__(self):
-        super().__init__()
-        self._avoid_recursion: set[str] = set()
-
-    def find_spec(
-        self,
-        fullname: str,
-        path: Sequence[str] | None,
-        target: types.ModuleType | None = None,
-    ) -> ModuleSpec | None:
-        # According to PEP451, this is mostly intended for a reload. I can't see a way
-        # (without calling importlib._bootstrap._find_spec, which should not be imported
-        # according to the note at the top of the module) to pass this information on.
-        # Hence, lets skip tracking in this case.
-        if target is not None:  # pragma: no cover
-            return None
-
-        # We use importlib to find the actual spec, so we need to avoid recursing when
-        # this finder is called again.
-        if fullname in self._avoid_recursion:
-            return None
-
-        # Find the spec.
-        self._avoid_recursion.add(fullname)
-        spec = importlib.util._find_spec_from_path(fullname, path)
-        self._avoid_recursion.remove(fullname)
-
-        # If it has an origin in one of our tracked dirs, log it.
-        if spec is not None and spec.origin is not None and spec.origin != "built-in":
-            global _config
-            if _config.in_tracking_dir("import", spec.origin):
-                _file_tracker.filenames.add(("r", _relative_if_subdir(spec.origin)))
-
-        # And return the result.
-        return spec
-
-
-def _install_standard_file_trackers():
-    """Internal: install standard file trackers in likely locations.
-
-    This wraps the standard open() function as well as the io.open() function. This
-    seems to catch all uses of the standard NumPy `load` (for both .npy and .npz files)
-    and `loadtxt`, and should also work for most libraries which use Python functions to
-    open files. It won't work for anything which uses low-level methods, either through
-    the `os` module or at C level in compiled modules.
-
-    Note: this needs to be run prior to importing NumPy (and therefore prior to
-    importing Matplotlib) as NumPy's data loader module stores a reference to io.open
-    which wouldn't get wrapped.
-
-    """
-    import builtins
-    import io
-
-    builtins.open = _file_tracker(builtins.open)
-    io.open = _file_tracker(io.open)
-    sys.meta_path.insert(0, ImportTracker())
-
-
 def _install_extra_file_trackers(trackers: list[str]):
     """Internal: install requested extra file trackers.
 
@@ -568,11 +583,11 @@ def _install_extra_file_trackers(trackers: list[str]):
         not case-sensitive. Currently only "netCDF4" is supported.
 
     """
-    for tracker in trackers:
-        tracker = tracker.strip().lower()
+    for tracker_name in trackers:
+        tracker_name = tracker_name.strip().lower()
 
         # netCDF4 data storage.
-        if tracker == "netcdf4":
+        if tracker_name == "netcdf4":
             import netCDF4
 
             # Wrap the Dataset class to modify its initialiser to track read files. The
@@ -582,9 +597,7 @@ def _install_extra_file_trackers(trackers: list[str]):
                 def __init__(self, filename, mode="r", **kwargs):
                     super().__init__(filename, mode=mode, **kwargs)
                     if mode == "r":
-                        _file_tracker.filenames.add(
-                            ("r", _relative_if_subdir(filename))
-                        )
+                        tracker.read.add(Path(filename).resolve())
 
             netCDF4.Dataset = PgfutilsTrackedDataset
 
@@ -601,47 +614,12 @@ def _install_extra_file_trackers(trackers: list[str]):
 
                     # And track them all.
                     for fn in files:
-                        _file_tracker.filenames.add(("r", _relative_if_subdir(fn)))
+                        tracker.read.add(Path(fn).resolve())
 
             netCDF4.MFDataset = PgfutilsTrackedMFDataset
 
         else:
-            raise ValueError(f"Unknown extra tracker {tracker}.")
-
-
-def add_dependencies(*args):
-    """Add a file dependency for the current figure.
-
-    In most situations, the in-built file tracking should suffice. However, some files
-    can be missed (for example, if a library you are using has its file opening routines
-    in a compiled extension rather than using Python functions). This function can be
-    used to manually add these files to the dependencies of the current figure.
-
-    Parameters
-    ----------
-    fn : path-like
-        The filename of the dependency, relative to the top-level directory of the
-        project.
-
-    """
-    for fn in args:
-        _file_tracker.filenames.add(("r", Path(fn)))
-
-
-def _list_opened_files():
-    """Internal: get project files which were opened by the script.
-
-    Returns
-    -------
-    list
-        A list of tuples (mode, filename) of files in or under the current directory
-        where each filename is a Path instance. Entries with mode 'r' were
-        opened for reading and are assumed to be dependencies of the generated figure.
-        Entries with mode 'w' were opened for writing and are rasterised graphics
-        included in the final figure. The list is sorted by mode and then filename.
-
-    """
-    return sorted(_file_tracker.filenames)
+            raise ValueError(f"Unknown extra tracker {tracker_name}.")
 
 
 # If the script has been run in an interactive mode (currently, if it is running under
@@ -699,7 +677,7 @@ def setup_figure(
         if not cfg_path.is_file():
             raise RuntimeError("pgfutils.cfg exists but is not a file.")
         _config.read(cfg_path)
-        _file_tracker.filenames.add(("r", cfg_path))
+        tracker.read.add(cfg_path.resolve())
 
     # And anything given in the function call.
     if kwargs:
@@ -722,13 +700,10 @@ def setup_figure(
         key, value = line.split("=", 1)
         os.environ[key.strip()] = value.strip()
 
-    # Install file trackers if desired. This must be done before anything which imports
-    # Matplotlib.
-    if "PGFUTILS_TRACK_FILES" in os.environ:
-        _install_standard_file_trackers()
-        extra = _config["pgfutils"]["extra_tracking"].strip()
-        if extra:
-            _install_extra_file_trackers(extra.split(","))
+    # Install extra file trackers if desired.
+    extra = _config["pgfutils"]["extra_tracking"].strip()
+    if extra:
+        _install_extra_file_trackers(extra.split(","))
 
     # Reset our interactive flag on each call.
     _interactive = False
@@ -750,9 +725,6 @@ def setup_figure(
         newpath = newpath.strip()
         if newpath:
             sys.path.insert(0, newpath)
-
-    # We're now ready to start configuring Matplotlib.
-    import matplotlib
 
     # Set the backend. We don't want to overwrite the current backend if this is an
     # interactive run as the PGF backend does not implement a GUI.
@@ -970,27 +942,47 @@ def save(figure=None):
     # Get Matplotlib to save it.
     figure.savefig(mpname)
 
-    # We have been tracking opened files and need to
-    # output our results.
+    # We want to output tracked files.
     if "PGFUTILS_TRACK_FILES" in os.environ:
-        # The files.
-        files = "\n".join([f"{mode}:{fn}" for mode, fn in _list_opened_files()])
+        files = []
+
+        # Include imported files if in the tracked directories.
+        for fn in tracker.imported:
+            if _config.in_tracking_dir("import", fn):
+                files.append(f"r:{_relative_if_subdir(fn)}")
+
+        # Include read files if in a tracked directory.
+        for fn in tracker.read:
+            if _config.in_tracking_dir("data", fn):
+                files.append(f"r:{_relative_if_subdir(fn)}")
+
+        # Include all dependencies explicitly added by the script.
+        for fn in tracker.explicit_dependencies:
+            files.append(f"r:{_relative_if_subdir(fn)}")
+
+        # Include files that were written if they match the pattern used by the PGF
+        # backend for rasterised parts of the figures.
+        for fn in tracker.written:
+            if re.match(r"^.+-img\d+.png$", fn.name):
+                files.append(f"w:{_relative_if_subdir(fn)}")
+
+        filestr = "\n".join(files)
 
         # Figure out where to print it.
         dest = os.environ.get("PGFUTILS_TRACK_FILES") or "1"
 
         # stdout.
         if dest == "1":
-            sys.stdout.write(files)
+            sys.stdout.write(filestr)
 
         # stderr.
         elif dest == "2":
-            sys.stderr.write(files)
+            sys.stderr.write(filestr)
 
         # A named file.
         else:
             with open(dest, "w") as f:
-                f.write(files)
+                f.write(filestr)
 
     # List of all postprocessing functions we are running on this figure. Each should
     # take in a single line as a string, and return the line with any required

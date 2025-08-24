@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-from pgfutils import _file_tracker, save, setup_figure
+from pgfutils import save, setup_figure, tracker
 
 setup_figure(width=1, height=1)
 
@@ -16,7 +16,7 @@ s = np.sin(2 * np.pi * 0.5 * t)
 
 # This is only for testing purposes.
 # You shouldn't need to do this in a normal script!
-os.fdopen = _file_tracker(os.fdopen)
+os.fdopen = tracker.wrap_file_opener(os.fdopen)
 
 fd = os.open("test_fdopen.png", os.O_WRONLY | os.O_CREAT)
 with os.fdopen(fd, "wb") as f:

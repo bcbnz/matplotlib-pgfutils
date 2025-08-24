@@ -245,12 +245,12 @@ class TestTrackingClass:
             assert res.returncode == 0
 
             # Check the results are as expected.
-            absdir = srcdir.resolve()
+            absdir = extra_dir.resolve()
             expected = {
                 "r:pgfutils.cfg",
-                f"r:{absdir / 'noise.npy'}",
+                f"r:{(absdir / '../noise.npy').resolve()}",
                 "r:scatter.csv",
-                "r:../../extra.file",
+                f"r:{(absdir / '../../extra.file').resolve()}",
                 "w:multi-img0.png",
                 "w:multi-img1.png",
             }
@@ -266,12 +266,12 @@ class TestTrackingClass:
             assert res.returncode == 0
 
             # Check the results are as expected.
-            absdir = srcdir.resolve()
+            absdir = extra_dir.resolve()
             expected = {
                 "r:pgfutils.cfg",
-                f"r:{absdir / 'noise.npy'}",
+                f"r:{(absdir / '../noise.npy').resolve()}",
                 "r:scatter.csv",
-                "r:../../extra.file",
+                f"r:{(absdir / '../../extra.file').resolve()}",
                 "w:multi-img0.png",
                 "w:multi-img1.png",
             }
@@ -288,12 +288,12 @@ class TestTrackingClass:
             assert res.returncode == 0
 
             # Check the results are as expected.
-            absdir = srcdir.resolve()
+            absdir = extra_dir.resolve()
             expected = {
                 "r:pgfutils.cfg",
-                f"r:{absdir / 'noise.npy'}",
+                f"r:{(absdir / '../noise.npy').resolve()}",
                 "r:scatter.csv",
-                "r:../../extra.file",
+                f"r:{(absdir / '../../extra.file').resolve()}",
                 "w:multi-img0.png",
                 "w:multi-img1.png",
             }
