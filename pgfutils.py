@@ -262,29 +262,6 @@ def parse_dimension(spec: str) -> float:
 class PgfutilsParser(configparser.ConfigParser):
     """Custom configuration parser with Matplotlib dimension and color support."""
 
-    # Regular expression to parse a dimension into size and (optional) unit.
-    _dimre = re.compile(r"^\s*(?P<size>\d+(?:\.\d*)?)\s*(?P<unit>.+?)?\s*$")
-
-    # Conversion factors (divisors) to go from the given unit to inches.
-    _dimconv = {
-        "cm": 2.54,
-        "centimetre": 2.54,
-        "centimeter": 2.54,
-        "centimetres": 2.54,
-        "centimeters": 2.54,
-        "mm": 25.4,
-        "millimetre": 25.4,
-        "millimeter": 25.4,
-        "millimetres": 25.4,
-        "millimeters": 25.4,
-        "in": 1,
-        "inch": 1,
-        "inches": 1,
-        "pt": 72.27,  # Printers points, not the 1/72 Postscript/PDF points.
-        "point": 72.27,
-        "points": 72.27,
-    }
-
     def read(self, filename, encoding=None):
         """Read configuration options from a file.
 
