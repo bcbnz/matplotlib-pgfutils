@@ -194,7 +194,7 @@ class ColorError(ValueError):
     pass
 
 
-def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float]):
+def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float, ...]):
     """Parse a color specification to a Matplotlib color.
 
     Recognised color formats are:
@@ -219,6 +219,9 @@ def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float
         The value could not be interpreted as a color.
 
     """
+    if isinstance(spec, list):
+        spec = tuple(spec)
+
     # Transparent.
     if spec in {"none", "transparent", ""}:
         return "none"
@@ -226,14 +229,14 @@ def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float
     # Single floating point number: grayscale.
     try:
         gray = float(spec)
-    except ValueError:
+    except (TypeError, ValueError):
         pass
     else:
         if not (0 <= gray <= 1):
-            raise ColorError("greyscale floats must be in [0, 1].")
+            raise ColorError("greyscale floats must be in [0, 1]")
 
         # For historical reasons Matlotlib requires this to be a string.
-        return spec
+        return str(gray)
 
     # Nth color in the cycle (i.e., C1, C2 etc), or a named color. Unfortunately,
     # this returns True for grayscale values outside [0, 1] so we have to do our own
@@ -241,23 +244,24 @@ def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float
     if matplotlib.colors.is_color_like(spec):
         return spec
 
-    # Anything else we accept is valid Python syntax, so parse it.
-    try:
-        parsed = ast.literal_eval(spec)
-    except (SyntaxError, TypeError, ValueError):
-        raise ColorError(f"could not interpret '{spec}' as a color.")
+    # Any other string we accept is valid Python syntax, so parse it.
+    if isinstance(spec, str):
+        try:
+            spec = ast.literal_eval(spec)
+        except (SyntaxError, TypeError, ValueError):
+            raise ColorError(f"could not interpret '{spec}' as a color.")
 
     # Needs to be a list or tuple of channel values.
-    if not isinstance(parsed, (list, tuple)):
+    if not isinstance(spec, (list, tuple)):
         raise ColorError(f"could not interpret '{spec}' as a color.")
 
     # Filter out Booleans which Matplotlib would treat as 0 or 1.
-    if any(isinstance(entry, bool) for entry in parsed):
+    if any(isinstance(entry, bool) for entry in spec):
         raise ColorError(f"could not interpret '{spec}' as a color.")
 
     # And get Matplotlib to convert to a color.
     try:
-        return matplotlib.colors.to_rgba(parsed)
+        return matplotlib.colors.to_rgba(spec)
     except ValueError as e:
         raise ColorError(str(e))
 
