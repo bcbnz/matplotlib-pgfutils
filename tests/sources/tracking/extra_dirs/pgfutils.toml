@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-[postprocessing]
-fix_raster_paths = yes
-tikzpicture = no
+[paths]
+data = """
+.
+..
+../..
+"""

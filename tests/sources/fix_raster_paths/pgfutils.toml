@@ -2,5 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 [paths]
-extra_imports =
-  ../lib
+data = "."
+
+[post_processing]
+fix_raster_paths = true
+tikzpicture = false

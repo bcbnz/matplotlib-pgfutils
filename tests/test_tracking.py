@@ -247,7 +247,7 @@ class TestTrackingClass:
             # Check the results are as expected.
             absdir = extra_dir.resolve()
             expected = {
-                "r:pgfutils.cfg",
+                "r:pgfutils.toml",
                 f"r:{(absdir / '../noise.npy').resolve()}",
                 "r:scatter.csv",
                 f"r:{(absdir / '../../extra.file').resolve()}",
@@ -268,7 +268,7 @@ class TestTrackingClass:
             # Check the results are as expected.
             absdir = extra_dir.resolve()
             expected = {
-                "r:pgfutils.cfg",
+                "r:pgfutils.toml",
                 f"r:{(absdir / '../noise.npy').resolve()}",
                 "r:scatter.csv",
                 f"r:{(absdir / '../../extra.file').resolve()}",
@@ -290,7 +290,7 @@ class TestTrackingClass:
             # Check the results are as expected.
             absdir = extra_dir.resolve()
             expected = {
-                "r:pgfutils.cfg",
+                "r:pgfutils.toml",
                 f"r:{(absdir / '../noise.npy').resolve()}",
                 "r:scatter.csv",
                 f"r:{(absdir / '../../extra.file').resolve()}",
@@ -444,8 +444,8 @@ class TestTrackingClass:
             }
             assert actual == expected
 
-    def test_netcdf4_cfg(self):
-        """File tracking with netCDF4 library enabled in pgfutils.cfg..."""
+    def test_netcdf4_toml(self):
+        """File tracking with netCDF4 library enabled in pgfutils.toml..."""
         pytest.importorskip("netCDF4", reason="netCDF4 not installed; cannot test.")
 
         env = {"PGFUTILS_TRACK_FILES": "1"}
@@ -454,7 +454,7 @@ class TestTrackingClass:
                 f"Running {srcdir / 'netcdf4' / 'netcdf4.py'} failed."
             )
             actual = set(res.stdout.strip().splitlines())
-            expected = {"r:sine.nc", "r:pgfutils.cfg"}
+            expected = {"r:sine.nc", "r:pgfutils.toml"}
             assert actual == expected
 
     def test_netcdf4_ignores_written(self):
@@ -484,7 +484,7 @@ class TestTrackingClass:
                 "r:mftest0.nc",
                 "r:mftest1.nc",
                 "r:mftest2.nc",
-                "r:pgfutils.cfg",
+                "r:pgfutils.toml",
             }
             assert actual == expected
 
@@ -502,7 +502,7 @@ class TestTrackingClass:
                 "r:mftest0.nc",
                 "r:mftest1.nc",
                 "r:mftest2.nc",
-                "r:pgfutils.cfg",
+                "r:pgfutils.toml",
             }
             assert actual == expected
 
@@ -514,7 +514,7 @@ class TestTrackingClass:
         with build_pypgf(dir, "figure.py", env) as res:
             assert res.returncode == 0, f"Running {dir / 'figure.py'} failed."
             actual = set(res.stdout.strip().splitlines())
-            expected = {"r:pgfutils.cfg", f"r:{libdir / 'custom_lib.py'}"}
+            expected = {"r:pgfutils.toml", f"r:{libdir / 'custom_lib.py'}"}
             assert actual == expected
 
     def test_import_tracking_extra_imports(self):
@@ -525,7 +525,7 @@ class TestTrackingClass:
         with build_pypgf(dir, "figure.py", env) as res:
             assert res.returncode == 0, f"Running {dir / 'figure.py'} failed."
             actual = set(res.stdout.strip().splitlines())
-            expected = {"r:pgfutils.cfg", f"r:{libdir / 'custom_lib.py'}"}
+            expected = {"r:pgfutils.toml", f"r:{libdir / 'custom_lib.py'}"}
             assert actual == expected
 
     def test_track_enabled_config(self):
@@ -538,7 +538,7 @@ class TestTrackingClass:
 
             # Check the results are as expected.
             expected = {
-                "r:pgfutils.cfg",
+                "r:pgfutils.toml",
                 "r:noise.npy",
                 "r:scatter.csv",
                 "r:extra.file",

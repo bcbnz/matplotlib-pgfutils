@@ -1,5 +1,7 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-[pgfutils]
-figure_background = blue
+[paths]
+extra_imports = """
+  ../lib
+"""

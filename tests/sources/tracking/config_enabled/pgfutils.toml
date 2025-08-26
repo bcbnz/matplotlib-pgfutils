@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-[postprocessing]
-fix_raster_paths = no
-tikzpicture = yes
+[pgfutils]
+environment = """
+PGFUTILS_TRACK_FILES = 1
+"""

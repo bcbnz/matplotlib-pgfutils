@@ -34,7 +34,7 @@ def test_tracking_fix_raster_paths():
     with build_pypgf(dir, "figures/noise.py", {"PGFUTILS_TRACK_FILES": "1"}) as res:
         assert res.returncode == 0, f"Building {dir / 'figures/noise.py'} failed."
         expected = {
-            "r:pgfutils.cfg",
+            "r:pgfutils.toml",
             "w:figures/noise-img0.png",
             "w:figures/noise-img1.png",
         }
@@ -44,7 +44,7 @@ def test_tracking_fix_raster_paths():
     with build_pypgf(dir, "speckle.py", {"PGFUTILS_TRACK_FILES": "1"}) as res:
         assert res.returncode == 0, f"Building {dir / 'speckle.pypgf'} failed."
         expected = {
-            "r:pgfutils.cfg",
+            "r:pgfutils.toml",
             "w:speckle-img0.png",
             "w:speckle-img1.png",
         }

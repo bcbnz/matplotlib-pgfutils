@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 [pgfutils]
-font_family=serif
-font_name=CothamSans
+font_family="serif"
+font_name="CothamSans"
 preamble_substitute=true
-preamble=
+preamble='''
   \usepackage{fontspec}
   \setmainfont{CothamSans}[
      Path=${basedir}/Cotham/,
      Extension=.otf
   ]
+'''

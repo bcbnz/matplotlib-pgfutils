@@ -14,8 +14,7 @@ __version__ = "2.0.0.dev0"
 
 import ast
 import builtins
-from collections.abc import Sequence
-import configparser
+from collections.abc import Mapping, Sequence
 import functools
 import importlib.abc
 from importlib.machinery import ModuleSpec
@@ -27,8 +26,10 @@ from pathlib import Path
 import re
 import string
 import sys
+import tomllib
 import types
-from typing import Callable, Literal
+from typing import Any, Callable, Literal, TypedDict, get_args, get_origin
+import warnings
 
 
 class Tracker(importlib.abc.MetaPathFinder):
@@ -183,15 +184,22 @@ import matplotlib  # noqa: E402
 
 
 class DimensionError(ValueError):
-    """A configuration entry could not be converted to a dimension."""
+    """A specification could not be converted to a dimension."""
 
     pass
 
 
 class ColorError(ValueError):
-    """A configuration entry could not be converted to a color."""
+    """A specification could not be converted to a color."""
 
     pass
+
+
+class ConfigError(ValueError):
+    """An error detected in the configuration."""
+
+    def __init__(self, section: str, key: str, message: str):
+        raise super().__init__(f"{section}.{key}: {message}")
 
 
 def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float, ...]):
@@ -331,230 +339,260 @@ def parse_dimension(spec: str) -> float:
     return size / factor
 
 
-class PgfutilsParser(configparser.ConfigParser):
-    """Custom configuration parser with Matplotlib dimension and color support."""
+# Subtypes used to mark entries which should be converted when loaded.
+type Dimension = float
+type Color = tuple[float]
 
-    def read(self, filename, encoding=None):
-        """Read configuration options from a file.
 
-        This is an extension of the standard ConfigParser.read() method to reject
-        unknown options. This provides an early indication to the user that they have
-        configured something incorrectly, rather than continuing and having their plot
-        generated differently to how they intended it.
+class PathConfig(TypedDict):
+    """Path configuration options."""
+
+    data: str
+    pythonpath: str
+    extra_imports: str
+
+
+class PGFUtilsConfig(TypedDict):
+    """Configuration of pgfutils behaviour."""
+
+    preamble: str
+    preamble_substitute: bool
+    font_family: Literal["serif", "sans-serif", "monospace", "cursive", "fantasy"]
+    font_name: str
+    font_size: float
+    legend_font_size: float
+    line_width: float
+    axes_line_width: float
+    legend_border_width: float
+    legend_border_color: Color
+    legend_background: Color
+    legend_opacity: float
+    figure_background: Color
+    axes_background: Color
+    extra_tracking: str
+    environment: str
+
+
+class PostProcessingConfig(TypedDict):
+    """Post-processing options."""
+
+    fix_raster_paths: bool
+    tikzpicture: bool
+
+
+class TexConfig(TypedDict):
+    """Configuration of the TeX system used to compile the final document."""
+
+    engine: Literal["lualatex", "pdflatex", "xelatex"]
+    text_height: Dimension
+    text_width: Dimension
+    marginpar_width: Dimension
+    marginpar_sep: Dimension
+    num_columns: int
+    columnsep: Dimension
+
+
+class Config:
+    """Overall configuration of pgfutils."""
+
+    paths: PathConfig
+    pgfutils: PGFUtilsConfig
+    post_processing: PostProcessingConfig
+    tex: TexConfig
+    rcparams: dict[str, dict[str, Any]]
+
+    def __init__(self, load_file: bool = True) -> None:
+        """
+        Parameters
+        ----------
+        load_file
+            If True, look for a file named `pgfutils.toml` in the current working
+            directory and load it after setting the defaults.
 
         """
+        self.paths = dict(data=".", pythonpath="", extra_imports="")
+        self.pgfutils = dict(
+            preamble="",
+            preamble_substitute=False,
+            font_family="serif",
+            font_name="",
+            font_size=10.0,
+            legend_font_size=10.0,
+            line_width=1.0,
+            axes_line_width=0.6,
+            legend_border_width=0.6,
+            legend_border_color=parse_color("0.8"),
+            legend_background=parse_color("white"),
+            legend_opacity=0.8,
+            figure_background=parse_color("transparent"),
+            axes_background=parse_color("white"),
+            extra_tracking="",
+            environment="",
+        )
+        self.post_processing = dict(fix_raster_paths=True, tikzpicture=False)
+        self.rcparams = {}
+        self.tex = dict(
+            engine="xelatex",
+            text_height=parse_dimension("550 points"),
+            text_width=parse_dimension("345 points"),
+            marginpar_width=parse_dimension("65 points"),
+            marginpar_sep=parse_dimension("11 points"),
+            num_columns=1,
+            columnsep=parse_dimension("10 points"),
+        )
 
-        def get_options():
-            options: set[str] = set()
-            for sect, opts in self._sections.items():  # type:ignore[attr-defined]
-                if sect == "rcParams":
+        if load_file:
+            cfg_path = Path("pgfutils.toml")
+            if cfg_path.exists():
+                if not cfg_path.is_file():
+                    raise RuntimeError("pgfutils.toml exists but is not a file.")
+                self.load(cfg_path)
+                tracker.read.add(cfg_path.resolve())
+
+    def load(self, source: Path):
+        """Load a configuration file and update the config with its contents.
+
+        Parameters
+        ----------
+        source
+            The path to the configuration file.
+
+        """
+        with source.open("rb") as f:
+            self.update(tomllib.load(f))
+
+    def update(self, new_settings: Mapping[str, Mapping[str, Any]]):
+        """Update the configuration.
+
+        Parameters
+        ----------
+        new_settings
+            The new settings to update the configuration with. The keys should
+            correspond to the configuration settings, and the values are a mapping of
+            key to new value. Any sections or keys not included will remain at their
+            current value.
+
+        """
+        # Check if there are sections we don't use.
+        extra = set(new_settings.keys()).difference(self.__annotations__)
+        if extra:
+            warnings.warn(
+                f"unknown sections in configuration: {', '.join(extra)}", stacklevel=2
+            )
+
+        # Process each section we know about.
+        for name, definition in self.__annotations__.items():
+            if name not in new_settings:
+                continue
+
+            # We don't validate the Matplotlib rcparams.
+            if name == "rcparams":
+                self.rcparams.update(new_settings["rcparams"])
+                continue
+
+            # Load the current and new sections for ease of use.
+            section = getattr(self, name)
+            new_section = new_settings[name]
+
+            # Check for keys not in the definition of this section.
+            extra = set(new_section.keys()).difference(definition.__annotations__)
+            if extra:
+                warnings.warn(
+                    f"unknown settings in section {name}: {', '.join(extra)}",
+                    stacklevel=2,
+                )
+
+            # And process each key.
+            for key, typehint in definition.__annotations__.items():
+                if key not in new_section:
                     continue
-                options.update(f"{sect}.{opt}" for opt in opts.keys())
-            return options
+                val = new_section[key]
 
-        # Get the options before and after reading.
-        before = get_options()
-        result = super().read(filename, encoding)
-        after = get_options()
+                # For subscripted typehints, e.g., list[Path] or Literal[...], we need
+                # to split out the base typehint and the contents.
+                origin = get_origin(typehint)
+                args = get_args(typehint)
 
-        # If there's a difference, thats an error.
-        diff = after.difference(before)
-        if diff:
-            if len(diff) == 1:
-                raise KeyError(f"{filename}: unknown option {diff.pop()}")
-            raise KeyError(f"{filename}: unknown options {', '.join(diff)}")
+                # For basic types, attempt to parse and complain on failure.
+                if typehint is Color:
+                    try:
+                        section[key] = parse_color(val)
+                    except ColorError as e:
+                        raise ConfigError(name, key, str(e)) from None
 
-        # Otherwise we're OK to continue.
-        return result
+                elif typehint is Dimension:
+                    try:
+                        section[key] = parse_dimension(val)
+                    except DimensionError as e:
+                        raise ConfigError(name, key, str(e)) from None
 
-    def read_kwargs(self, **kwargs):
-        """Read configuration options from keyword arguments."""
-        # Dictionary of values to load.
-        d: dict[str, dict[str, str]] = {}
+                elif typehint is float:
+                    try:
+                        section[key] = float(val)
+                    except ValueError as e:
+                        raise ConfigError(name, key, str(e)) from None
 
-        # Option -> section lookup table.
-        lookup = {}
+                elif typehint is int:
+                    try:
+                        section[key] = int(val)
+                    except ValueError as e:
+                        raise ConfigError(name, key, str(e)) from None
 
-        # Go through all existing options.
-        for section, options in self._sections.items():  # type:ignore[attr-defined]
-            # Can't specify rcParams through kwargs.
-            if section == "rcParams":
-                continue
+                # For a literal, check the value is one of the allowed options.
+                elif origin is Literal:
+                    if val not in args:
+                        raise ConfigError(
+                            name,
+                            key,
+                            f"allowed values are {', '.join(args)} (got {val})",
+                        )
+                    section[key] = val
 
-            # Add to our tables.
-            d[section] = {}
-            for option in options.keys():
-                lookup[option] = section
+                # Assume a string.
+                else:
+                    section[key] = val
 
-        # Go through all given arguments.
-        for key, value in kwargs.items():
-            # Check this option already exists.
-            section = lookup.get(key, None)
-            if section is None:
-                raise KeyError(f"Unknown configuration option {key}.")
 
-            # Save it.
-            d[section][key] = value
+config = Config()
 
-        # And then read the dictionary in.
-        return self.read_dict(d)
 
-    def getdimension(self, section, option, **kwargs):
-        """Return a configuration entry as a dimension in inches.
+def in_tracking_dir(type, fn):
+    """Check if a file is in a tracking directory.
 
-        The dimension should be in the format '<value><unit>', where the unit can be
-        'mm', 'cm', 'in', or 'pt'. If no unit is specified, it is assumed to be in
-        inches. Note that points refer to TeX points (72.27 per inch) rather than
-        Postscript points (72 per inch).
+    Parameters
+    ----------
+    type : {"data", "import"}
+        The type of file to check for.
+    fn : path-like
+        The filename to check.
 
-        Parameters
-        ----------
-        section, option: string
-            The section and option keys to retrieve.
+    Returns
+    -------
+    Boolean
+        True if the file is in one of the corresponding tracking directories
+        specified in the configuration.
 
-        Returns
-        -------
-        float: The dimension in inches.
+    """
+    if type == "data":
+        paths = config.paths["data"].strip().splitlines()
+    elif type == "import":
+        paths = config.paths["pythonpath"].strip().splitlines()
+        paths.extend(config.paths["extra_imports"].strip().splitlines())
+    else:
+        raise ValueError(f"Unknown tracking type {type}.")
 
-        Raises
-        ------
-        DimensionError:
-            The dimension is empty or not recognised.
-
-        """
-        # Get the string version of the dimension.
-        dim = self.get(section, option, **kwargs)
-
-        # And parse it; modify any parsing exception to include
-        # the section and option we were parsing.
+    # If we can compute a relative path, it must be within the directory.
+    fn = Path(fn).resolve()
+    for path in paths:
+        resolved = Path(path).resolve()
         try:
-            return parse_dimension(dim)
-        except DimensionError as e:
-            raise DimensionError(f"{section}.{option}: {e}") from None
+            fn.relative_to(resolved)
+        except ValueError:
+            continue
+        return True
 
-    def getcolor(self, section, option, **kwargs):
-        """Return a configuration entry as a Matplotlib color.
-
-        Recognised color formats are:
-            * Named colors (red, yellow, etc.)
-            * Cycle colors (C1, C2 etc.)
-            * Tuples (r, g, b) or (r, g, b, a) with floating-point entries in [0, 1]
-            * A floating-point value in [0, 1] for grayscale
-            * 'none', 'transparent', or an empty value for transparent
-
-        Parameters
-        ----------
-        section, option: string
-            The section and option keys to retrieve.
-
-        Returns
-        -------
-        matplotlib-compatible colour.
-
-        Raises
-        ------
-        ColorError
-            The value could not be interpreted as a color.
-
-        """
-        # Get the string version of the dimension.
-        spec = self.get(section, option, **kwargs)
-
-        # And parse it; modify any parsing exception to include
-        # the section and option we were parsing.
-        try:
-            return parse_color(spec)
-        except ColorError as e:
-            raise ColorError(f"{section}.{option}: {e}") from None
-
-    def in_tracking_dir(self, type, fn):
-        """Check if a file is in a tracking directory.
-
-        Parameters
-        ----------
-        type : {"data", "import"}
-            The type of file to check for.
-        fn : path-like
-            The filename to check.
-
-        Returns
-        -------
-        Boolean
-            True if the file is in one of the corresponding tracking directories
-            specified in the configuration.
-
-        """
-        if type == "data":
-            paths = self.get("paths", "data").strip().splitlines()
-        elif type == "import":
-            paths = self.get("paths", "pythonpath").strip().splitlines()
-            paths.extend(self.get("paths", "extra_imports").strip().splitlines())
-        else:
-            raise ValueError(f"Unknown tracking type {type}.")
-
-        # If we can compute a relative path, it must be within the directory.
-        fn = Path(fn).resolve()
-        for path in paths:
-            resolved = Path(path).resolve()
-            try:
-                fn.relative_to(resolved)
-            except ValueError:
-                continue
-            return True
-
-        # Not in any of the directories.
-        return False
-
-
-# The current configuration.
-_config = PgfutilsParser()
-
-
-def _config_reset():
-    """Internal: reset the configuration to the default state."""
-    global _config
-    _config.clear()
-    _config.read_dict(
-        {
-            "tex": {
-                "engine": "xelatex",
-                "text_width": "345 points",
-                "text_height": "550 points",
-                "marginpar_width": "65 points",
-                "marginpar_sep": "11 points",
-                "num_columns": "1",
-                "columnsep": "10 points",
-            },
-            "pgfutils": {
-                "preamble": "",
-                "preamble_substitute": "false",
-                "font_family": "serif",
-                "font_name": "",
-                "font_size": "10",
-                "legend_font_size": "10",
-                "line_width": "1",
-                "axes_line_width": "0.6",
-                "legend_border_width": "0.6",
-                "legend_border_color": "(0.8, 0.8, 0.8)",
-                "legend_background": "(1, 1, 1)",
-                "legend_opacity": 0.8,
-                "figure_background": "",
-                "axes_background": "white",
-                "extra_tracking": "",
-                "environment": "",
-            },
-            "paths": {
-                "data": ".",
-                "pythonpath": "",
-                "extra_imports": "",
-            },
-            "rcParams": {},
-            "postprocessing": {
-                "fix_raster_paths": "true",
-                "tikzpicture": "false",
-            },
-        }
-    )
+    # Not in any of the directories.
+    return False
 
 
 def _relative_if_subdir(fn):
@@ -672,25 +710,14 @@ def setup_figure(
         the text height. The columns and margin parameters are ignored if this is True.
 
     """
-    global _config, _interactive
-
-    # Reset the configuration.
-    _config_reset()
-
-    # Load configuration from a local file if one exists.
-    cfg_path = Path("pgfutils.cfg")
-    if cfg_path.exists():
-        if not cfg_path.is_file():
-            raise RuntimeError("pgfutils.cfg exists but is not a file.")
-        _config.read(cfg_path)
-        tracker.read.add(cfg_path.resolve())
+    global _interactive
 
     # And anything given in the function call.
     if kwargs:
-        _config.read_kwargs(**kwargs)
+        config.update({"pgfutils": kwargs})
 
     # Set environment variables specified in the configuration.
-    for line in _config["pgfutils"]["environment"].splitlines():
+    for line in config.pgfutils["environment"].splitlines():
         line = line.strip()
         if not line:
             continue
@@ -707,7 +734,7 @@ def setup_figure(
         os.environ[key.strip()] = value.strip()
 
     # Install extra file trackers if desired.
-    extra = _config["pgfutils"]["extra_tracking"].strip()
+    extra = config.pgfutils["extra_tracking"].strip()
     if extra:
         _install_extra_file_trackers(extra.split(","))
 
@@ -727,7 +754,7 @@ def setup_figure(
             _interactive = True
 
     # Add any desired entries to sys.path.
-    for newpath in _config["paths"]["pythonpath"].splitlines():
+    for newpath in config.paths["pythonpath"].splitlines():
         newpath = newpath.strip()
         if newpath:
             sys.path.insert(0, newpath)
@@ -738,11 +765,11 @@ def setup_figure(
         matplotlib.use("pgf")
 
     # Specify which TeX engine we are using.
-    matplotlib.rcParams["pgf.texsystem"] = _config["tex"]["engine"]
+    matplotlib.rcParams["pgf.texsystem"] = config.tex["engine"]
 
     # Custom TeX preamble.
-    preamble = _config["pgfutils"]["preamble"]
-    if _config["pgfutils"].getboolean("preamble_substitute"):
+    preamble = config.pgfutils["preamble"]
+    if config.pgfutils["preamble_substitute"]:
         preamble = string.Template(preamble).substitute(basedir=str(Path.cwd()))
     matplotlib.rcParams["pgf.preamble"] = preamble
 
@@ -757,19 +784,17 @@ def setup_figure(
     matplotlib.rcParams["pgf.rcfonts"] = False
 
     # Set the font family in use.
-    matplotlib.rcParams["font.family"] = _config["pgfutils"]["font_family"]
+    matplotlib.rcParams["font.family"] = config.pgfutils["font_family"]
 
     # If a specific font was given, add it to the list of fonts for
     # the chosen font family.
-    if _config["pgfutils"]["font_name"]:
-        k = f"font.{_config['pgfutils']['font_family']}"
-        matplotlib.rcParams[k].append(_config["pgfutils"]["font_name"])
+    if config.pgfutils["font_name"]:
+        k = f"font.{config.pgfutils['font_family']}"
+        matplotlib.rcParams[k].append(config.pgfutils["font_name"])
 
     # Set the font sizes.
-    matplotlib.rcParams["font.size"] = _config["pgfutils"].getfloat("font_size")
-    matplotlib.rcParams["legend.fontsize"] = _config["pgfutils"].getfloat(
-        "legend_font_size"
-    )
+    matplotlib.rcParams["font.size"] = config.pgfutils["font_size"]
+    matplotlib.rcParams["legend.fontsize"] = config.pgfutils["legend_font_size"]
 
     # Don't use Unicode in the figures. If this is not disabled, the PGF backend can
     # replace some characters with unicode variants, and these don't always play nicely
@@ -777,29 +802,21 @@ def setup_figure(
     matplotlib.rcParams["axes.unicode_minus"] = False
 
     # Line widths.
-    matplotlib.rcParams["axes.linewidth"] = _config["pgfutils"].getfloat(
-        "axes_line_width"
-    )
-    matplotlib.rcParams["lines.linewidth"] = _config["pgfutils"].getfloat("line_width")
+    matplotlib.rcParams["axes.linewidth"] = config.pgfutils["axes_line_width"]
+    matplotlib.rcParams["lines.linewidth"] = config.pgfutils["line_width"]
 
     # Colours.
-    matplotlib.rcParams["figure.facecolor"] = _config["pgfutils"].getcolor(
-        "figure_background"
-    )
-    matplotlib.rcParams["savefig.facecolor"] = _config["pgfutils"].getcolor(
-        "figure_background"
-    )
-    matplotlib.rcParams["axes.facecolor"] = _config["pgfutils"].getcolor(
-        "axes_background"
-    )
+    matplotlib.rcParams["figure.facecolor"] = config.pgfutils["figure_background"]
+    matplotlib.rcParams["savefig.facecolor"] = config.pgfutils["figure_background"]
+    matplotlib.rcParams["axes.facecolor"] = config.pgfutils["axes_background"]
 
     # Now we need to figure out the total width available for the figure, i.e., the
     # width corresponding to the figure parameter being 1.  First, look up some document
     # properties.
-    text_width = _config["tex"].getdimension("text_width")
-    margin_width = _config["tex"].getdimension("marginpar_width")
-    margin_sep = _config["tex"].getdimension("marginpar_sep")
-    num_columns = _config["tex"].getint("num_columns")
+    text_width = config.tex["text_width"]
+    margin_width = config.tex["marginpar_width"]
+    margin_sep = config.tex["marginpar_sep"]
+    num_columns = config.tex["num_columns"]
 
     # Full-width figure.
     if full_width:
@@ -816,19 +833,19 @@ def setup_figure(
     # More columns than present in the document.
     elif columns > num_columns:
         raise ValueError(
-            f"Document has {num_columns} columns, but you asked for a figure spanning "
-            f"{columns} columns."
+            f"document has {num_columns} columns, but you asked for a figure spanning "
+            f"{columns} columns"
         )
 
     # Not sure what this would mean.
     elif columns < 1:
-        raise ValueError("Number of columns must be at least one.")
+        raise ValueError("number of columns must be at least one")
 
     # A number of columns less than the total.
     else:
         # Figure out the width of each column. N columns have N - 1 separators between
         # them.
-        columnsep = _config["tex"].getdimension("columnsep")
+        columnsep = config.tex["columnsep"]
         total_columnsep = columnsep * (num_columns - 1)
         total_columnw = text_width - total_columnsep
         column_width = total_columnw / num_columns
@@ -853,7 +870,7 @@ def setup_figure(
     except ValueError:
         h = parse_dimension(height)
     else:
-        h *= _config["tex"].getdimension("text_height")
+        h *= config.tex["text_height"]
 
     # Set the figure size.
     matplotlib.rcParams["figure.figsize"] = [w, h]
@@ -862,7 +879,7 @@ def setup_figure(
     matplotlib.rcParams["figure.autolayout"] = True
 
     # Copy any specific rcParams the user set.
-    matplotlib.rcParams.update(_config["rcParams"])
+    matplotlib.rcParams.update(config.rcparams)
 
 
 def save(figure=None):
@@ -879,7 +896,7 @@ def save(figure=None):
         will be saved.
 
     """
-    global _config, _interactive
+    global _interactive
 
     from matplotlib import __version__ as mpl_version, pyplot as plt
 
@@ -894,10 +911,10 @@ def save(figure=None):
         legend = axes.get_legend()
         if legend:
             frame = legend.get_frame()
-            frame.set_linewidth(_config["pgfutils"].getfloat("legend_border_width"))
-            frame.set_alpha(_config["pgfutils"].getfloat("legend_opacity"))
-            frame.set_ec(_config["pgfutils"].getcolor("legend_border_color"))
-            frame.set_fc(_config["pgfutils"].getcolor("legend_background"))
+            frame.set_linewidth(config.pgfutils["legend_border_width"])
+            frame.set_alpha(config.pgfutils["legend_opacity"])
+            frame.set_ec(config.pgfutils["legend_border_color"])
+            frame.set_fc(config.pgfutils["legend_background"])
 
         # Some PDF viewers show white lines through vector colorbars. This is a bug in
         # the viewers, but can be worked around by forcing the edge of the patches in
@@ -954,12 +971,12 @@ def save(figure=None):
 
         # Include imported files if in the tracked directories.
         for fn in tracker.imported:
-            if _config.in_tracking_dir("import", fn):
+            if in_tracking_dir("import", fn):
                 files.append(f"r:{_relative_if_subdir(fn)}")
 
         # Include read files if in a tracked directory.
         for fn in tracker.read:
-            if _config.in_tracking_dir("data", fn):
+            if in_tracking_dir("data", fn):
                 files.append(f"r:{_relative_if_subdir(fn)}")
 
         # Include all dependencies explicitly added by the script.
@@ -996,8 +1013,8 @@ def save(figure=None):
     pp_funcs = []
 
     # Local cache of postprocessing options.
-    fix_raster_paths = _config["postprocessing"].getboolean("fix_raster_paths")
-    tikzpicture = _config["postprocessing"].getboolean("tikzpicture")
+    fix_raster_paths = config.post_processing["fix_raster_paths"]
+    tikzpicture = config.post_processing["tikzpicture"]
 
     # Add the appropriate directory prefix to all raster images
     # included via \pgfimage.

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pgfutils import _config, _config_reset
+from pgfutils import Config
 
 base = Path(__file__).parent
 
@@ -14,34 +14,26 @@ class TestConfigClass:
     """Configuration parser tests not performed elsewhere."""
 
     def test_kwargs_unknown(self):
-        """Config parser rejects unknown keywords..."""
-        _config_reset()
-        with pytest.raises(KeyError):
-            _config.read_kwargs(unknown_keyword="yellow")
+        """Config parser warns about unknown keys..."""
+        config = Config(load_file=False)
+        with pytest.warns(UserWarning, match="unknown settings.+unknown_key"):
+            config.update({"pgfutils": {"unknown_key": "yellow"}})
 
     def test_cfg_unknown(self):
-        """Config parser rejects unknown options in config file..."""
-        _config_reset()
-        with pytest.raises(KeyError):
-            _config.read(base / "sources" / "extra_options.cfg")
+        """Config parser warns about unknown keys in config file..."""
+        config = Config(load_file=False)
+        with pytest.warns(UserWarning, match="unknown settings.+margin"):
+            config.load(base / "sources" / "extra_options.toml")
 
     def test_cfg_rcparams(self):
         """Config parser allows rcParams in config file..."""
-        _config_reset()
-        _config.read(base / "sources" / "extra_rcparams.cfg")
-        assert not _config["rcParams"].getboolean("ytick.left"), (
-            "ytick.left is incorrect"
-        )
-        assert _config["rcParams"].getboolean("ytick.right"), "ytick.right is incorrect"
+        config = Config(load_file=False)
+        config.load(base / "sources" / "extra_rcparams.toml")
+        assert not config.rcparams["ytick.left"], "ytick.left is incorrect"
+        assert config.rcparams["ytick.right"], "ytick.right is incorrect"
 
     def test_cfg_unknown_rcparams(self):
-        """Config parser rejects unknown options in file also containing rcParams..."""
-        _config_reset()
-        with pytest.raises(KeyError):
-            _config.read(base / "sources" / "extra_options_rcparams.cfg")
-
-    def test_unknown_tracking_type(self):
-        """Unknown tracking types are rejected..."""
-        _config_reset()
-        with pytest.raises(ValueError):
-            _config.in_tracking_dir("unknown", "file.txt")
+        """Config parser warns about unknown keys in file also containing rcParams..."""
+        config = Config(load_file=False)
+        with pytest.warns(UserWarning, match="unknown settings.+margin"):
+            config.load(base / "sources" / "extra_options_rcparams.toml")

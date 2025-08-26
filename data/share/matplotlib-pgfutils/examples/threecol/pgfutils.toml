@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: 0BSD
 
 [tex]
-engine = xelatex
-text_width = 710 points
-text_height = 529 points
+engine = "xelatex"
+text_width = "710 points"
+text_height = "529 points"
 num_columns = 3
-columnsep = 10 points
+columnsep = "10 points"
 
 [pgfutils]
 # To show the extent of the figures.
-figure_background = yellow
+figure_background = "yellow"

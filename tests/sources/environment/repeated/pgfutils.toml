@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 [pgfutils]
-environment=
-  line1=ok
-  line2 should fail
+environment="""
+  name1=value1
+  name2 = value2   
+  name1=value3
+"""

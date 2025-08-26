@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: 0BSD
 
 [tex]
-engine = xelatex
+engine = "xelatex"
 
 # Standard xelatex article class with twocolumn option.
-text_width = 469 points
-text_height = 550 points
+text_width = "469 points"
+text_height = "550 points"
 num_columns = 2
-columnsep = 10 points
+columnsep = "10 points"
 
 [pgfutils]
 # To show the extent of the figures.
-figure_background = yellow
+figure_background = "yellow"

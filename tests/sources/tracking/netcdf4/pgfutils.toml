@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-[paths]
-pythonpath =
-  libdir
+[pgfutils]
+extra_tracking = "netCDF4"

@@ -5,11 +5,11 @@ from pathlib import Path
 
 import matplotlib
 import numpy as np
-from pytest import approx, raises
+from pytest import approx, warns
 
-from pgfutils import _config, _config_reset, setup_figure
+from pgfutils import config, setup_figure
 
-from .utils import build_pypgf, in_directory
+from .utils import build_pypgf
 
 base = Path(__file__).parent.resolve()
 
@@ -18,20 +18,18 @@ class TestSetupFigureClass:
     def test_setup_both_fractions(self):
         """setup_figure() with both sizes fractions..."""
         # Simple case.
-        _config_reset()
         setup_figure(width=1, height=1)
         w, h = matplotlib.rcParams["figure.figsize"]
-        assert w == _config["tex"].getdimension("text_width")
-        assert h == _config["tex"].getdimension("text_height")
+        assert w == config.tex["text_width"]
+        assert h == config.tex["text_height"]
 
         # More complicated fractions.
         for m in np.linspace(0.1, 2.1, 13):
             for n in np.linspace(0.1, 2.1, 13):
-                _config_reset()
                 setup_figure(width=m, height=n)
                 w, h = matplotlib.rcParams["figure.figsize"]
-                assert w == approx(m * _config["tex"].getdimension("text_width"))
-                assert h == approx(n * _config["tex"].getdimension("text_height"))
+                assert w == approx(m * config.tex["text_width"])
+                assert h == approx(n * config.tex["text_height"])
 
     def test_setup_both_dimensions(self):
         """setup_figure() with both sizes specific dimensions..."""
@@ -58,7 +56,6 @@ class TestSetupFigureClass:
         # Check each combination.
         for wstr, winch in dims.items():
             for hstr, hinch in dims.items():
-                _config_reset()
                 setup_figure(width=wstr, height=hstr)
                 w, h = matplotlib.rcParams["figure.figsize"]
                 assert w == approx(winch, rel=1e-3)
@@ -89,10 +86,9 @@ class TestSetupFigureClass:
         # Check various combinations.
         for m in np.linspace(0.3, 2.5, 17):
             for hstr, hinch in dims.items():
-                _config_reset()
                 setup_figure(width=m, height=hstr)
                 w, h = matplotlib.rcParams["figure.figsize"]
-                assert w == approx(m * _config["tex"].getdimension("text_width"))
+                assert w == approx(m * config.tex["text_width"])
                 assert h == approx(hinch, rel=1e-3)
 
     def test_setup_height_fraction(self):
@@ -120,11 +116,10 @@ class TestSetupFigureClass:
         # Check various combinations.
         for wstr, winch in dims.items():
             for n in np.linspace(0.3, 2.5, 17):
-                _config_reset()
                 setup_figure(width=wstr, height=n)
                 w, h = matplotlib.rcParams["figure.figsize"]
                 assert w == approx(winch, rel=1e-3)
-                assert h == approx(n * _config["tex"].getdimension("text_height"))
+                assert h == approx(n * config.tex["text_height"])
 
     def test_kwargs_overrides(self):
         """Test setup_figure() kwargs override configuration file..."""
@@ -140,7 +135,7 @@ class TestSetupFigureClass:
                     line = line.replace(r"}%", "")
                     return tuple(map(float, line.split(",")))
 
-        # Check the default (pgfutils.cfg) fill color is in use.
+        # Check the default (pgfutils.toml) fill color is in use.
         with build_pypgf(dir, "default.py") as res:
             assert res.returncode == 0, f"Failed to run {dir / 'default.py'}."
             assert get_fill_color(dir / "default.pypgf") == approx((0, 0, 1)), (
@@ -154,28 +149,25 @@ class TestSetupFigureClass:
                 (1, 0, 0)
             ), "Overridden background fill should be red, (1, 0, 0)."
 
-    def test_kwargs_rejects_unknown(self):
-        """Test setup_figure() rejects unknown configuration options..."""
-        with raises(KeyError):
+    def test_kwargs_warns_unknown(self):
+        """Test setup_figure() warns about unknown configuration options..."""
+        with warns(UserWarning, match="unknown settings .+ border_width"):
             setup_figure(width=1, height=1, border_width=3)
 
     def test_setup_margin(self):
         """Test setup_figure() generates margin figures with margin=True..."""
-        setup_figure()
-        margin = _config["tex"].getdimension("marginpar_width")
-        height = _config["tex"].getdimension("text_height")
+        margin = config.tex["marginpar_width"]
+        height = config.tex["text_height"]
 
         # Fractional tests.
         for w_in in {1.0, 0.5, 1.2}:
             for h_in in {0.3, 0.25, 0.5}:
-                _config_reset()
                 setup_figure(width=w_in, height=h_in, margin=True)
                 w, h = matplotlib.rcParams["figure.figsize"]
                 assert w == approx(w_in * margin)
                 assert h == approx(h_in * height)
 
         # Specific size.
-        _config_reset()
         setup_figure(width="1.8in", height="1.2in", margin=True)
         w, h = matplotlib.rcParams["figure.figsize"]
         assert w == approx(1.8)
@@ -183,24 +175,21 @@ class TestSetupFigureClass:
 
     def test_setup_full_width(self):
         """Test setup_figure() generates full-width figures with full_width=True..."""
-        setup_figure()
-        text = _config["tex"].getdimension("text_width")
-        sep = _config["tex"].getdimension("marginpar_sep")
-        margin = _config["tex"].getdimension("marginpar_width")
+        text = config.tex["text_width"]
+        sep = config.tex["marginpar_sep"]
+        margin = config.tex["marginpar_width"]
         full = text + sep + margin
-        height = _config["tex"].getdimension("text_height")
+        height = config.tex["text_height"]
 
         # Fractional tests.
         for w_in in {1.0, 0.75, 1.1}:
             for h_in in {0.4, 0.35, 0.15}:
-                _config_reset()
                 setup_figure(width=w_in, height=h_in, full_width=True)
                 w, h = matplotlib.rcParams["figure.figsize"]
                 assert w == approx(w_in * full)
                 assert h == approx(h_in * height)
 
         # Specific size.
-        _config_reset()
         setup_figure(width="5.5in", height="3.6in", full_width=True)
         w, h = matplotlib.rcParams["figure.figsize"]
         assert w == approx(5.5)
@@ -208,37 +197,26 @@ class TestSetupFigureClass:
 
     def test_setup_arg_priority(self):
         """Test priority of columns/margin/full_width arguments to setup_figure()..."""
-        setup_figure()
-        text = _config["tex"].getdimension("text_width")
-        sep = _config["tex"].getdimension("marginpar_sep")
-        margin = _config["tex"].getdimension("marginpar_width")
+        text = config.tex["text_width"]
+        sep = config.tex["marginpar_sep"]
+        margin = config.tex["marginpar_width"]
         full = text + sep + margin
-        height = _config["tex"].getdimension("text_height")
+        height = config.tex["text_height"]
 
         # All three: full width should take priority.
-        _config_reset()
         setup_figure(width=1, height=0.4, columns=1, margin=True, full_width=True)
         w, h = matplotlib.rcParams["figure.figsize"]
         assert w == approx(full)
         assert h == approx(0.4 * height)
 
         # Margin and full width: full width should take priority.
-        _config_reset()
         setup_figure(width=1, height=0.4, margin=True, full_width=True)
         w, h = matplotlib.rcParams["figure.figsize"]
         assert w == approx(full)
         assert h == approx(0.4 * height)
 
         # Margin and columns: margin should take priority.
-        _config_reset()
         setup_figure(width=1, height=0.4, columns=1, margin=True)
         w, h = matplotlib.rcParams["figure.figsize"]
         assert w == approx(margin)
         assert h == approx(0.4 * height)
-
-    def test_setup_pgfutilscfg_not_file(self, tmpdir):
-        """Check setup_figure() errors if pgfutils.cfg exists but is not a file..."""
-        tmpdir.mkdir("pgfutils.cfg")
-        with in_directory(Path(tmpdir)):
-            with raises(RuntimeError, match="exists but is not a file"):
-                setup_figure()

@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-[paths]
-pythonpath =
-  ../lib
+[pgfutils]
+figure_background = "blue"

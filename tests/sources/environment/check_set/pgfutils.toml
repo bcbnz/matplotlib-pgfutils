@@ -2,5 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 [pgfutils]
-environment =
-  PGFUTILS_TRACK_FILES = 1
+environment="""
+  name1=value1
+  name2 = value2   
+"""
