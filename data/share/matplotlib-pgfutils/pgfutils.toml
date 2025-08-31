@@ -135,7 +135,9 @@ environment = ""
 # taken to be relative to the project's top-level directory. Note that these
 # are not added to any search paths, i.e., you still have to use the full path
 # when loading data files in a script.
-data = "."
+data = [
+  ".",
+]
 
 # Entries to add to the start of sys.path. This will be done in the order
 # specified here, so the last path in this setting will be the first in
@@ -147,12 +149,12 @@ data = "."
 #   subdir/pythonlib
 #   /usr/share/myotherlib
 #
-pythonpath = ""
+pythonpath = []
 
 
 # Paths containing Python libraries which are already on the Python path, but
 # should be included in the file tracking.
-extra_imports = ""
+extra_imports = []
 
 
 # Specific Matplotlib rcParams to set.

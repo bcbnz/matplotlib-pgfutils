@@ -330,9 +330,9 @@ type Color = tuple[float]
 class PathConfig(TypedDict):
     """Path configuration options."""
 
-    data: str
-    pythonpath: str
-    extra_imports: str
+    data: set[Path]
+    pythonpath: set[Path]
+    extra_imports: set[Path]
 
 
 class PGFUtilsConfig(TypedDict):
@@ -393,7 +393,9 @@ class Config:
             directory and load it after setting the defaults.
 
         """
-        self.paths = dict(data=".", pythonpath="", extra_imports="")
+        self.paths = dict(
+            data={Path.cwd().resolve()}, pythonpath=set(), extra_imports=set()
+        )
         self.pgfutils = dict(
             preamble="",
             preamble_substitute=False,
@@ -531,6 +533,17 @@ class Config:
                         )
                     section[key] = val
 
+                # For a set, handle based on the type of the set items.
+                elif origin is set:
+                    if not isinstance(val, (set, list, tuple)):
+                        raise ConfigError(name, key, "value must be a list")
+
+                    if args == (Path,):
+                        for item in val:
+                            section[key].add(Path(item).resolve())
+                    else:
+                        raise RuntimeError(f"unhandled set type {args}")
+
                 # Assume a string.
                 else:
                     section[key] = val
@@ -557,19 +570,17 @@ def in_tracking_dir(type, fn):
 
     """
     if type == "data":
-        paths = config.paths["data"].strip().splitlines()
+        paths = config.paths["data"]
     elif type == "import":
-        paths = config.paths["pythonpath"].strip().splitlines()
-        paths.extend(config.paths["extra_imports"].strip().splitlines())
+        paths = config.paths["pythonpath"].union(config.paths["extra_imports"])
     else:
         raise ValueError(f"Unknown tracking type {type}.")
 
     # If we can compute a relative path, it must be within the directory.
     fn = Path(fn).resolve()
     for path in paths:
-        resolved = Path(path).resolve()
         try:
-            fn.relative_to(resolved)
+            fn.relative_to(path)
         except ValueError:
             continue
         return True
@@ -737,10 +748,8 @@ def setup_figure(
             _interactive = True
 
     # Add any desired entries to sys.path.
-    for newpath in config.paths["pythonpath"].splitlines():
-        newpath = newpath.strip()
-        if newpath:
-            sys.path.insert(0, newpath)
+    for newpath in config.paths["pythonpath"]:
+        sys.path.insert(0, str(newpath))
 
     # Set the backend. We don't want to overwrite the current backend if this is an
     # interactive run as the PGF backend does not implement a GUI.
