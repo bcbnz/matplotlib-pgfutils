@@ -176,7 +176,7 @@ class ConfigError(ValueError):
     """An error detected in the configuration."""
 
     def __init__(self, section: str, key: str, message: str):
-        raise super().__init__(f"{section}.{key}: {message}")
+        super().__init__(f"{section}.{key}: {message}")
 
 
 def parse_color(spec: Literal["none", "transparent"] | str | float | tuple[float, ...]):
