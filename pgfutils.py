@@ -14,11 +14,8 @@ __version__ = "2.0.0.dev0"
 
 import ast
 import builtins
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 import functools
-import importlib.abc
-from importlib.machinery import ModuleSpec
-import importlib.util
 import inspect
 import io
 import os
@@ -27,25 +24,38 @@ import re
 import string
 import sys
 import tomllib
-import types
 from typing import Any, Callable, Literal, TypedDict, get_args, get_origin
 import warnings
 
 
-class Tracker(importlib.abc.MetaPathFinder):
+class Tracker:
     """Track files that are read, written or imported.
 
     This can then be used for generating dependency lists. Note that the tracker does
-    not filter the files; that is up to the user.
-
-    Note that any imports that occur prior to the tracker being installed will not be
-    tracked. Any code which loads a file opener prior to it being wrapped for tracking
-    will also avoid tracking.
+    not filter the files; that is up to the user. Functions must be wrapped before use.
 
     """
 
-    # Files that have imported.
-    imported: set[Path]
+    @property
+    def imported(self) -> set[Path]:
+        """Absolute paths to modules that were imported.
+
+        This iterates over all modules cached in `sys.modules` and finds the paths to
+        each module. Any modules which don't have a filesystem path specified will be
+        ignored.
+
+        """
+        paths = set()
+
+        for mod in sys.modules.values():
+            if mod.__spec__ is None or mod.__spec__.origin is None:
+                continue
+
+            path = Path(mod.__spec__.origin)
+            if path.exists() and path.is_file():
+                paths.add(path.resolve())
+
+        return paths
 
     # Files that were opened in a read mode.
     read: set[Path]
@@ -61,12 +71,9 @@ class Tracker(importlib.abc.MetaPathFinder):
 
     def __init__(self):
         super().__init__()
-        self._avoid_recursion = set()
-        self.imported = set()
         self.read = set()
         self.explicit_dependencies = set()
         self.written = set()
-        sys.meta_path.insert(0, self)
 
     def add_dependencies(self, *args: os.PathLike[str] | str):
         """Add a file dependency for the current figure.
@@ -86,36 +93,6 @@ class Tracker(importlib.abc.MetaPathFinder):
         """
         for fn in args:
             self.explicit_dependencies.add(Path(fn).resolve())
-
-    def find_spec(
-        self,
-        fullname: str,
-        path: Sequence[str] | None,
-        target: types.ModuleType | None = None,
-    ) -> ModuleSpec | None:
-        # According to PEP451, this is mostly intended for a reload. I can't see a way
-        # (without calling importlib._bootstrap._find_spec, which should not be imported
-        # according to the note at the top of the module) to pass this information on.
-        # Hence, lets skip tracking in this case.
-        if target is not None:  # pragma: no cover
-            return None
-
-        # We use importlib to find the actual spec, so we need to avoid recursing when
-        # this finder is called again.
-        if fullname in self._avoid_recursion:
-            return None
-
-        # Find the spec.
-        self._avoid_recursion.add(fullname)
-        spec = importlib.util._find_spec_from_path(fullname, path)
-        self._avoid_recursion.remove(fullname)
-
-        # If it has an origin in one of our tracked dirs, log it.
-        if spec is not None and spec.origin is not None and spec.origin != "built-in":
-            self.imported.add(spec.origin)
-
-        # And return the result.
-        return spec
 
     def wrap_file_opener[**P, R](self, opener: Callable[P, R]) -> Callable[P, R]:
         """Wrap a function which opens files for tracking.
@@ -178,7 +155,7 @@ builtins.open = tracker.wrap_file_opener(builtins.open)
 io.open = tracker.wrap_file_opener(io.open)
 
 # Now we can import Matplotlib. We couldn't do so earlier as it brings in NumPy, which
-# in turn caches references to io.open() and so we prevent us reliably tracking data
+# in turn caches references to io.open() and so would prevent us reliably tracking data
 # files it opens.
 import matplotlib  # noqa: E402
 
