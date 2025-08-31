@@ -48,10 +48,16 @@ class Tracker:
         paths = set()
 
         for mod in sys.modules.values():
-            if mod.__spec__ is None or mod.__spec__.origin is None:
+            # Find the spec used to load the module and from that the origin. If not
+            # given, skip this module.
+            spec = getattr(mod, "__spec__", None)
+            if spec is None:
+                continue
+            origin = getattr(spec, "origin", None)
+            if origin is None:
                 continue
 
-            path = Path(mod.__spec__.origin)
+            path = Path(origin)
             if path.exists() and path.is_file():
                 paths.add(path.resolve())
 
