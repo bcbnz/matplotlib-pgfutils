@@ -18,10 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [3.12, 3.13]
-        matplotlib-version: [ "3.7.5", "3.10.0" ]
+        matplotlib-version: [ "3.8.4", "3.10.6" ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,8 +31,8 @@ jobs:
 
       - name: Install system libraries
         run: |
-          sudo apt update
-          xargs -a .github/workflows/requirements-test-apt.txt sudo apt install -y
+          sudo apt-get update
+          xargs -a .github/workflows/requirements-test-apt.txt sudo apt-get install -y
 
       - name: Install test environment
         run: |
