@@ -18,7 +18,7 @@ class TestDataClass:
         # Helper function to convert a config object to a dictionary.
         def to_dict(cfg: Config):
             result = {}
-            for section in cfg.__annotations__.keys():
+            for section in Config.__annotations__.keys():
                 result[section] = getattr(cfg, section)
             return result
 

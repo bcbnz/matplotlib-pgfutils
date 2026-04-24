@@ -459,14 +459,14 @@ class Config:
 
         """
         # Check if there are sections we don't use.
-        extra = set(new_settings.keys()).difference(self.__annotations__)
+        extra = set(new_settings.keys()).difference(Config.__annotations__)
         if extra:
             warnings.warn(
                 f"unknown sections in configuration: {', '.join(extra)}", stacklevel=2
             )
 
         # Process each section we know about.
-        for name, definition in self.__annotations__.items():
+        for name, definition in Config.__annotations__.items():
             if name not in new_settings:
                 continue
 
