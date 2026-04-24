@@ -24,7 +24,7 @@ jobs:
           architecture: x64
 
       - name: Lint
-        uses: astral-sh/ruff-action@v4
+        uses: astral-sh/ruff-action@v4.0.0
 
       - name: Check formatting
         if: always()
