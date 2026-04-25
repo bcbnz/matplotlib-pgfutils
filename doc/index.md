@@ -60,11 +60,19 @@ save()
 Requirements
 ------------
 
-Using pgfutils requires Python 3. Each commit is currently tested with release
-versions of Python 3.6 and 3.7, as well as a development version of Python 3.8.
+pgfutils follows [SPEC0][] when determining supported Python versions. Any minor version
+of Python released within the 3 years prior to a pgfutils release is supported. As of
+April 2026, this means Python 3.12 or later.
 
-The only external dependency is matplotlib. All the other dependencies are part
-of the standard Python library.
+The only required external dependency is Matplotlib. Also following SPEC0, any minor
+version of Matplotlib which was first released within the 24 months prior to a pgfutils
+release is supported. As of April 2026, this means Matplotlib 3.9.0 or later.
+
+The continuous integration testing checks the combinations of supported Python and
+Matplotlib version. Older versions of Python or Matplotlib may work, but are not tested
+and are not supported.
+
+[SPEC0]: https://scientific-python.org/specs/spec-0000
 
 
 Examples
@@ -92,3 +100,9 @@ Sanfilippo and is licensed under the SIL Open Font License, Version 1.1. The
 license can be found in the source at tests/sources/fonts/Cotham/OFL.txt or
 online at https://scripts.sil.org/OFL and the font itself can be found at
 https://github.com/sebsan/Cotham
+
+pgfutils supports the [REUSE][] initiative. All files either have with SPDX-compliant
+license identifiers in their headers, or have a `REUSE.toml` manifest file accompanying
+them.
+
+[REUSE]: https://reuse.software

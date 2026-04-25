@@ -64,14 +64,15 @@ Requirements
 
 pgfutils follows [SPEC0][3] when determining supported Python versions. Any minor
 version of Python released within the 3 years prior to a pgfutils release is
-supported. As of January 2025, this means Python 3.11 or later.
+supported. As of April 2026, this means Python 3.12 or later.
 
 The only required external dependency is Matplotlib. Any minor version of Matplotlib
 which was first released within the 24 months prior to a pgfutils release is supported.
-As of January 2025, this means Matplotlib 3.7.0 or later.
+As of April 2026, this means Matplotlib 3.9.0 or later.
 
-Older versions of Python or Matplotlib may work, but are not tested and are not
-supported.
+The continuous integration testing checks the combinations of supported Python and
+Matplotlib version. Older versions of Python or Matplotlib may work, but are not tested
+and are not supported.
 
 
 Examples
@@ -136,6 +137,10 @@ license can be found in the source at LICENSES/OFL-1.1.txt or online at
 https://scripts.sil.org/OFL and the font itself can be found at
 https://github.com/sebsan/Cotham
 
+pgfutils supports the [REUSE][8] initiative. All files either have with SPDX-compliant
+license identifiers in their headers, or have a `REUSE.toml` manifest file accompanying
+them.
+
 
 [1]: https://github.com/pgf-tikz/pgf
 [2]: https://matplotlib.org/
@@ -144,3 +149,4 @@ https://github.com/sebsan/Cotham
 [5]: https://pytest.org/
 [6]: https://coverage.readthedocs.io/
 [7]: https://pytest-cov.readthedocs.io/
+[8]: https://reuse.software/
