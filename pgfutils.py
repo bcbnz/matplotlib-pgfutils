@@ -1042,10 +1042,6 @@ def save(figure: "matplotlib.figure.Figure|None" = None):
         if dest == "1":
             sys.stdout.write(filestr)
 
-        # stderr.
-        elif dest == "2":
-            sys.stderr.write(filestr)
-
         # A named file.
         else:
             with open(dest, "w") as f:

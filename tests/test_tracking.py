@@ -22,14 +22,6 @@ class TestTrackingClass:
             assert res.returncode == 0
             assert len(res.stdout.strip()) == 0
 
-    def test_simple_stderr(self):
-        """File tracking to stderr with no dependencies or rasterisation..."""
-        # Run the script and check no files were reported.
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(srcdir, "simple.py", env) as res:
-            assert res.returncode == 0
-            assert len(res.stderr.strip()) == 0
-
     def test_simple_file(self):
         """File tracking to file with no dependencies or rasterisation..."""
         # Run the script and check no files were reported.
@@ -50,17 +42,6 @@ class TestTrackingClass:
             # Check the expected raster filename is reported.
             fn = "rasterisation-img0.png"
             assert res.stdout.strip() == "w:" + fn
-
-    def test_rasterisation_stderr(self):
-        """File tracking to stderr with rasterised image..."""
-        # Run the script.
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(srcdir, "rasterisation.py", env) as res:
-            assert res.returncode == 0
-
-            # Check the expected raster filename is reported.
-            fn = "rasterisation-img0.png"
-            assert res.stderr.strip() == "w:" + fn
 
     def test_rasterisation_file(self):
         """File tracking to file with rasterised image..."""
@@ -86,17 +67,6 @@ class TestTrackingClass:
             fn = "scatter.csv"
             assert res.stdout.strip() == "r:" + fn
 
-    def test_loadtxt_stderr(self):
-        """File tracking to stderr with loadtxt dependency..."""
-        # Run the script.
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(srcdir, "dependency_loadtxt.py", env) as res:
-            assert res.returncode == 0
-
-            # Check the expected dependency filename is reported.
-            fn = "scatter.csv"
-            assert res.stderr.strip() == "r:" + fn
-
     def test_loadtxt_file(self):
         """File tracking to file with loadtxt dependency..."""
         # Run the script.
@@ -121,17 +91,6 @@ class TestTrackingClass:
             fn = "scatter.csv"
             assert res.stdout.strip() == "r:" + fn
 
-    def test_pathlib_stderr(self):
-        """File tracking to stderr with pathlib dependency..."""
-        # Run the script.
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(srcdir, "dependency_pathlib.py", env) as res:
-            assert res.returncode == 0
-
-            # Check the expected dependency filename is reported.
-            fn = "scatter.csv"
-            assert res.stderr.strip() == "r:" + fn
-
     def test_pathlib_file(self):
         """File tracking to file with pathlib dependency..."""
         # Run the script.
@@ -155,17 +114,6 @@ class TestTrackingClass:
             # Check the expected dependency filename is reported.
             fn = "noise.npy"
             assert res.stdout.strip() == "r:" + fn
-
-    def test_load_stderr(self):
-        """File tracking to stderr with NumPy format dependency..."""
-        # Run the script.
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(srcdir, "dependency_npy.py", env) as res:
-            assert res.returncode == 0
-
-            # Check the expected dependency filename is reported.
-            fn = "noise.npy"
-            assert res.stderr.strip() == "r:" + fn
 
     def test_load_file(self):
         """File tracking to file with NumPy format dependency..."""
@@ -196,24 +144,6 @@ class TestTrackingClass:
                 "w:multi-img1.png",
             }
             actual = set(res.stdout.strip().splitlines())
-            assert actual == expected
-
-    def test_multi_stderr(self):
-        """File tracking to stderr with multiple dependencies and rasterisation..."""
-        # Run the script.
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(srcdir, "multi.py", env) as res:
-            assert res.returncode == 0
-
-            # Check the results are as expected.
-            expected = {
-                "r:noise.npy",
-                "r:scatter.csv",
-                "r:extra.file",
-                "w:multi-img0.png",
-                "w:multi-img1.png",
-            }
-            actual = set(res.stderr.strip().splitlines())
             assert actual == expected
 
     def test_multi_file(self):
@@ -255,27 +185,6 @@ class TestTrackingClass:
                 "w:multi-img1.png",
             }
             actual = set(res.stdout.strip().splitlines())
-            assert actual == expected
-
-    def test_extradirs_stderr(self):
-        """File tracking to stderr with extra dependency directories."""
-        # Run the script.
-        extra_dir = srcdir / "extra_dirs"
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        with build_pypgf(extra_dir, "multi.py", env) as res:
-            assert res.returncode == 0
-
-            # Check the results are as expected.
-            absdir = extra_dir.resolve()
-            expected = {
-                "r:pgfutils.toml",
-                f"r:{(absdir / '../noise.npy').resolve()}",
-                "r:scatter.csv",
-                f"r:{(absdir / '../../extra.file').resolve()}",
-                "w:multi-img0.png",
-                "w:multi-img1.png",
-            }
-            actual = set(res.stderr.strip().splitlines())
             assert actual == expected
 
     def test_extradirs_file(self):
@@ -380,22 +289,6 @@ class TestTrackingClass:
 
                 # Check the output files are correct.
                 actual = set(res.stdout.strip().splitlines())
-                assert actual == expected
-
-    def test_manual_stderr(self):
-        """File tracking to stderr with manual dependencies..."""
-        env = {"PGFUTILS_TRACK_FILES": "2"}
-        tests = {
-            "manual_dependency.py": {"r:data.file"},
-            "manual_dependencies.py": {"r:data.file", "r:another.file"},
-        }
-        for script, expected in tests.items():
-            # Run the script and check it succeeded.
-            with build_pypgf(srcdir, script, env) as res:
-                assert res.returncode == 0, f"Running {srcdir / script} failed,"
-
-                # Check the output files are correct.
-                actual = set(res.stderr.strip().splitlines())
                 assert actual == expected
 
     def test_manual_file(self):
