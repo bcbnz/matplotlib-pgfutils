@@ -6,20 +6,21 @@ from pgfutils import save, setup_figure
 setup_figure(width=1, height=1)
 
 from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
+import numpy as np
 
-cmap = plt.cm.coolwarm
-custom_lines = [
-    Line2D([0], [0], color=cmap(0), lw=4),
-    Line2D([0], [0], color=cmap(0.5), lw=4),
-    Line2D([0], [0], color=cmap(1), lw=4),
-]
+t = np.arange(0, 1, 0.005)
+s1 = np.sin(2 * np.pi * t)
+s2 = np.sin(4 * np.pi * t)
+s3 = np.sin(6 * np.pi * t)
 
 # Disable all other frames and sources of text.
 fig = plt.figure(frameon=False)
 ax = fig.add_axes([0, 0, 1, 1])
 ax.axis("off")
 
-plt.legend(custom_lines, ("One", "Two", "Three"), loc="center")
+ax.plot(t, s1, label="One")
+ax.plot(t, s2, label="Two")
+ax.plot(t, s3, label="Three")
+ax.legend()
 
 save()

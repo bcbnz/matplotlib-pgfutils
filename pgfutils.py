@@ -354,6 +354,7 @@ class PGFUtilsConfig(TypedDict):
     axes_background: Color
     extra_tracking: str
     environment: str
+    separate_legend: bool
 
 
 class PostProcessingConfig(TypedDict):
@@ -413,6 +414,7 @@ class Config:
             axes_background=parse_color("white"),
             extra_tracking="",
             environment="",
+            separate_legend=False,
         )
         self.post_processing = dict(fix_raster_paths=True, tikzpicture=False)
         self.rcparams = {}
@@ -874,7 +876,7 @@ def setup_figure(
     matplotlib.rcParams.update(config.rcparams)
 
 
-def save(figure=None):
+def save(figure: "matplotlib.figure.Figure|None" = None):
     """Save the figure.
 
     The filename is based on the name of the script which calls this function. For
@@ -890,18 +892,55 @@ def save(figure=None):
     """
     global _interactive
 
-    from matplotlib import __version__ as mpl_version, pyplot as plt
+    from matplotlib import pyplot as plt
 
     # Get the current figure if needed.
     if figure is None:
         figure = plt.gcf()
 
+    # Figures to save.
+    to_save = [("main_figure", figure, None)]
+
     # Go through and fix up a few little quirks on the axes within this figure.
     for axes in figure.get_axes():
-        # There are no rcParams for the legend properties. Go through and set these
-        # directly before we save.
+        # Check if these axes have a legend.
         legend = axes.get_legend()
         if legend:
+            # Want to save the legend as a separate figure.
+            if config.pgfutils["separate_legend"]:
+                # Create a new figure to hold the legend with empty axes.
+                legend_fig = plt.figure()
+                legend_ax = legend_fig.add_subplot()
+                legend_ax.axis("off")
+
+                # Regenerate the legend on the new axes, allowing it to use the whole
+                # figure. Removing it from the original axes and then using add_artist
+                # on these axes seems to get the bounding box wrong.
+                legend_standalone = legend_ax.legend(
+                    *legend.axes.get_legend_handles_labels(),
+                    bbox_to_anchor=(0, 0, 1, 1),
+                    bbox_transform=legend_fig.transFigure,
+                    ncols=legend._ncols,
+                    numpoints=legend.numpoints,
+                    scatterpoints=legend.scatterpoints,
+                )
+
+                # Measure its bounding box.
+                bbox = legend_standalone.get_tightbbox()
+                if not bbox:
+                    raise RuntimeError("could not determine legend bounding box")
+
+                # This is in pixels; convert to inches as savefig() will need.
+                bbox = bbox.transformed(legend_fig.dpi_scale_trans.inverted())
+
+                # Remove the original legend and replace the reference.
+                legend.remove()
+                legend = legend_standalone
+
+                # And save the standalone figure as a legend.
+                to_save.append(("legend", legend_fig, bbox))
+
+            # There are no rcParams for the legend properties; set them directly.
             frame = legend.get_frame()
             frame.set_linewidth(config.pgfutils["legend_border_width"])
             frame.set_alpha(config.pgfutils["legend_opacity"])
@@ -948,14 +987,24 @@ def save(figure=None):
         return
 
     # Look at the next frame up for the name of the calling script.
-    script = Path(inspect.getfile(sys._getframe(1)))
+    script_fn = Path(inspect.getfile(sys._getframe(1)))
 
-    # The initial Matplotlib output file, and the final figure file.
-    mpname = script.with_suffix(".pgf")
-    figname = script.with_suffix(".pypgf")
+    # And save each figure object.
+    legend_id = 0
+    for figtype, fig, bbox in to_save:
+        # Main figure object for the plot. Use the same path and stem.
+        if figtype == "main_figure":
+            pypgf_fn = script_fn.with_suffix(".pypgf")
 
-    # Get Matplotlib to save it.
-    figure.savefig(mpname)
+        # Legend being saved to a separate file. Add a unique suffix to the filename.
+        elif figtype == "legend":
+            pypgf_fn = script_fn.with_name(f"{script_fn.stem}_legend{legend_id}.pypgf")
+            legend_id += 1
+
+        else:
+            raise RuntimeError("unknown figure type")
+
+        _save_and_postprocess(fig, pypgf_fn, script_fn, bbox)
 
     # We want to output tracked files.
     if "PGFUTILS_TRACK_FILES" in os.environ:
@@ -966,8 +1015,11 @@ def save(figure=None):
             if in_tracking_dir("import", fn):
                 files.append(f"r:{_relative_if_subdir(fn)}")
 
-        # Include read files if in a tracked directory.
+        # Include read files if in a tracked directory, and they don't correspond to the
+        # initial PGF file written by Matplotlib that we read in for post-processing.
         for fn in tracker.read:
+            if fn.suffix == ".pgf":
+                continue
             if in_tracking_dir("data", fn):
                 files.append(f"r:{_relative_if_subdir(fn)}")
 
@@ -999,10 +1051,40 @@ def save(figure=None):
             with open(dest, "w") as f:
                 f.write(filestr)
 
+
+def _save_and_postprocess(
+    figure: "matplotlib.figure.Figure",
+    pypgf_fn: Path,
+    script_fn: Path,
+    bbox: "matplotlib.transforms.Bbox|None",
+):
+    """Save and postprocess a figure.
+
+    Parameters
+    ----------
+    figure
+        The figure instance to save.
+    pypgf_fn
+        The filename to write the final post-processed figure to.
+    script_fn
+        The filename of the script which produced the figure.
+    bbox
+        A bounding box (in inches) giving the portion of the figure to save. If None,
+        the entire figure is saved.
+
+    """
+    from matplotlib import __version__ as mpl_version
+
+    mpl_fn = pypgf_fn.with_suffix(".pgf")
+    if bbox is None:
+        figure.savefig(mpl_fn)
+    else:
+        figure.savefig(mpl_fn, bbox_inches=bbox)
+
     # List of all postprocessing functions we are running on this figure. Each should
     # take in a single line as a string, and return the line with any required
     # modifications.
-    pp_funcs = []
+    pp_funcs: list[Callable[[str], str]] = []
 
     # Local cache of postprocessing options.
     fix_raster_paths = config.post_processing["fix_raster_paths"]
@@ -1011,7 +1093,7 @@ def save(figure=None):
     # Add the appropriate directory prefix to all raster images
     # included via \pgfimage.
     if fix_raster_paths:
-        figdir = figname.parent
+        figdir = pypgf_fn.parent
 
         # Only apply this if the figure is not in the top-level directory.
         if not figdir.samefile("."):
@@ -1027,7 +1109,7 @@ def save(figure=None):
         pp_funcs.append(lambda s: re.sub(expr, repl, s))
 
     # Postprocess the figure, moving it into the final destination.
-    with open(mpname, "r") as infile, open(figname, "w") as outfile:
+    with open(mpl_fn, "r") as infile, open(pypgf_fn, "w") as outfile:
         # Make some modifications to the header.
         line = infile.readline()
         while line[0] == "%":
@@ -1040,13 +1122,13 @@ def save(figure=None):
                 outfile.write(", matplotlib-pgfutils v")
                 outfile.write(__version__)
                 outfile.write("\n%%  Script: ")
-                outfile.write(str(script.resolve()))
+                outfile.write(str(script_fn.resolve()))
                 outfile.write("\n")
 
             # Update the \input instructions.
             elif r"\input{<filename>.pgf}" in line:
                 outfile.write("%%   \\input{")
-                outfile.write(str(figname))
+                outfile.write(str(pypgf_fn))
                 outfile.write("}\n")
 
             # If we're changing the figure to use the tikzpicture environment, we also
@@ -1084,4 +1166,4 @@ def save(figure=None):
             outfile.write(line)
 
     # Delete the original file.
-    os.remove(mpname)
+    os.remove(mpl_fn)
