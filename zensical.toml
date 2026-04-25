@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: Blair Bonnett
+# SPDX-License-Identifier: 0BSD
+
+[project]
+site_name = "matplotlib-pgfutils"
+docs_dir = "doc"
+site_dir = "build/doc"
+repo_url = "https://github.com/bcbnz/matplotlib-pgfutils"
+
+nav = [
+  "index.md",
+  "usage.md",
+  "config.md",
+  "interactive.md",
+  "file_tracking.md",
+  "latexmk.md",
+]
+
+[project.theme.icon]
+repo = "fontawesome/brands/github"
