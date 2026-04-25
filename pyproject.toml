@@ -78,8 +78,12 @@ force-sort-within-sections = true
 #
 
 [tool.pytest.ini_options]
-addopts = "-v --cov=pgfutils --cov-report html --cov-report term --cov-branch"
+addopts = "-v --cov=pgfutils --cov-report html --cov-report term"
 filterwarnings = [
     "ignore:The distutils package is deprecated",
     "ignore:numpy.ndarray size changed"
 ]
+
+[tool.coverage.run]
+branch = true
+patch = ["subprocess"]
