@@ -67,6 +67,7 @@ def build_pypgf(figure_dir, filename, environment=None):
     # Generate the sub-environment.
     env = dict(os.environ)
     env["PYTHONPATH"] = ":".join(paths)
+    env["PYTHONWARNINGS"] = "always:unknown settings::pgfutils"
     env.update(environment)
 
     # Run the script.
@@ -83,6 +84,12 @@ def build_pypgf(figure_dir, filename, environment=None):
     sys.stdout.flush()
     sys.stderr.write(res.stderr)
     sys.stderr.flush()
+
+    # Check if unknown settings were reported and convert to an exception.
+    for line in res.stderr.splitlines():
+        if "UserWarning: unknown settings" in line:
+            _, _, msg = line.partition("UserWarning: ")
+            raise RuntimeError(msg)
 
     # Pass the result to the user, and clean up afterwards.
     try:

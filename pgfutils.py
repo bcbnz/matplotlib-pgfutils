@@ -338,8 +338,6 @@ class PathConfig(TypedDict):
 class PGFUtilsConfig(TypedDict):
     """Configuration of pgfutils behaviour."""
 
-    preamble: str
-    preamble_substitute: bool
     font_family: Literal["serif", "sans-serif", "monospace", "cursive", "fantasy"]
     font_name: str
     font_size: float
@@ -374,6 +372,8 @@ class TexConfig(TypedDict):
     marginpar_sep: Dimension
     num_columns: int
     columnsep: Dimension
+    preamble: str
+    preamble_substitute: bool
 
 
 class Config:
@@ -398,8 +398,6 @@ class Config:
             data={Path.cwd().resolve()}, pythonpath=set(), extra_imports=set()
         )
         self.pgfutils = dict(
-            preamble="",
-            preamble_substitute=False,
             font_family="serif",
             font_name="",
             font_size=10.0,
@@ -426,6 +424,8 @@ class Config:
             marginpar_sep=parse_dimension("11 points"),
             num_columns=1,
             columnsep=parse_dimension("10 points"),
+            preamble="",
+            preamble_substitute=False,
         )
 
         if load_file:
@@ -762,8 +762,8 @@ def setup_figure(
     matplotlib.rcParams["pgf.texsystem"] = config.tex["engine"]
 
     # Custom TeX preamble.
-    preamble = config.pgfutils["preamble"]
-    if config.pgfutils["preamble_substitute"]:
+    preamble = config.tex["preamble"]
+    if config.tex["preamble_substitute"]:
         preamble = string.Template(preamble).substitute(basedir=str(Path.cwd()))
     matplotlib.rcParams["pgf.preamble"] = preamble
 

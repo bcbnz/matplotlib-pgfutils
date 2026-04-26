@@ -1,9 +1,7 @@
 # SPDX-FileCopyrightText: Blair Bonnett
 # SPDX-License-Identifier: BSD-3-Clause
 
-[pgfutils]
-font_family="serif"
-font_name="CothamSans"
+[tex]
 preamble_substitute=true
 preamble='''
   \usepackage{fontspec}
@@ -12,3 +10,7 @@ preamble='''
      Extension=.otf
   ]
 '''
+
+[pgfutils]
+font_family="serif"
+font_name="CothamSans"
