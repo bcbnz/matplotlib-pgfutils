@@ -16,5 +16,18 @@ nav = [
   "latexmk.md",
 ]
 
+[project.theme]
+features = [
+  "content.code.copy"
+]
+
 [project.theme.icon]
 repo = "fontawesome/brands/github"
+
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
+line_spans = "__span"
+pygments_lang_class = true
+
+[project.markdown_extensions.pymdownx.snippets]
+[project.markdown_extensions.pymdownx.superfences]

@@ -1,0 +1,15 @@
+[tex]
+# TeX engine used to compile the final document.
+engine = "xelatex"
+
+# Layout of the final document.
+text_width = "345 points"
+text_height = "550 points"
+marginpar_width = "65 points"
+marginpar_sep = "11 points"
+num_columns = 1
+columnsep = "10 points"
+
+# Custom preamble to use when calling TeX from pgfutils.
+preamble = ""
+preamble_substitute = false

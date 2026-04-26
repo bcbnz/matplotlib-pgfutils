@@ -1,0 +1,27 @@
+[pgfutils]
+# General font settings.
+font_family = "serif"
+font_name = ""
+font_size = 10
+
+# Figure frame.
+figure_background = "transparent"
+axes_background = "white"
+axes_line_width = 0.6
+
+# Plot settings.
+line_width = 1
+
+# Legend settings.
+legend_border_width = 0.6
+legend_border_color = 0.8
+legend_background = "white"
+legend_opacity = 0.8
+legend_font_size = 10
+separate_legend = false
+
+# Extra libraries to install file tracking on.
+extra_tracking = ""
+
+# Environment variables to set.
+environment = ""
