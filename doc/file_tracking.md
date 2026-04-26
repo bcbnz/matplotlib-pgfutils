@@ -92,19 +92,21 @@ Extra tracking
 By default, tracking is only installed on standard Python functions. If you use
 the [netCDF4][1] library, tracking can also be enabled for files opened by it
 (which includes other libraries that use netCDF4, such as xarray). To enable
-this project-wide, set the `extra_tracking` option to `netCDF4` in your
+this project-wide, add the `netCDF4` option to the `extra_tracking` option in your
 configuration:
 
-```INI
+```toml
 [pgfutils]
-extra_tracking = netCDF4
+extra_tracking = [
+  "netCDF4"
+]
 ```
 
 To only enable it for a specific figure, add the option to the ``setup_figure``
 call:
 
 ```python
-setup_figure(width=1, height=0.4, extra_tracking="netCDF4")
+setup_figure(width=1, height=0.4, extra_tracking=["netCDF4"])
 ```
 
 

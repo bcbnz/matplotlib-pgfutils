@@ -2,7 +2,4 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 [pgfutils]
-environment="""
-  name1=value1
-  name2 = value2   
-"""
+environment = {name1="value1", name2="value2"}

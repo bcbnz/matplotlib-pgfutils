@@ -118,14 +118,11 @@ legend_font_size = 10.0
 separate_legend = false
 
 # Extra library-specific file trackers to install.
-extra_tracking = ""
+extra_tracking = []
 
-# Environment variables to set. This should be a multi-line value; place one or
-# more spaces between each subsequenct line (these spaces will be removed when
-# parsing the configuration). Each line should be in the format name = value,
-# with the value being read as a string, and leading and trailing spaces being
-# removed from both the name and the value.
-environment = ""
+# Environment variables to set. This a table mapping variable name to value; both must
+# be strings.
+environment = {}
 
 
 

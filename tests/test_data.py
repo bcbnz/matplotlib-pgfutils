@@ -3,8 +3,11 @@
 
 from copy import deepcopy
 from pathlib import Path
+import tomllib
 
-from pgfutils import Config
+import pytest
+
+from pgfutils import Config, ConfigError
 
 base_dir = Path(__file__).parent.parent.resolve()
 share_dir = base_dir / "data" / "share" / "matplotlib-pgfutils"
@@ -33,6 +36,7 @@ class TestDataClass:
 
         # Check there were no extra settings.
         for record in recwarn:
+            assert "unknown sections" not in str(record.message)
             assert "unknown settings" not in str(record.message)
 
     def test_doc_default_config(self, tmp_path, recwarn):
@@ -56,4 +60,56 @@ class TestDataClass:
 
         # Check there were no extra settings.
         for record in recwarn:
+            assert "unknown sections" not in str(record.message)
             assert "unknown settings" not in str(record.message)
+
+    @pytest.mark.parametrize("fn", ["config.md", "file_tracking.md"])
+    def test_doc_config_snippets(self, fn, recwarn):
+        """Check configuration snippets in docs can be loaded..."""
+        # Look for each block of TOML code.
+        blocks = []
+        current = []
+        in_block = False
+        for line in (base_dir / "doc" / fn).read_text().splitlines():
+            line = line.strip()
+
+            # Start of a TOML block.
+            if line in {"```toml", "``` toml"}:
+                in_block = True
+                continue
+
+            # End of any block.
+            if line == "```":
+                in_block = False
+                if current:
+                    blocks.append(list(current))
+                    current.clear()
+                continue
+
+            # Line in a TOML block. If the block loads its content from external files,
+            # we skip the block as they are tested elsewhere.
+            if in_block:
+                if "--8<--" in line:
+                    in_block = False
+                    current.clear()
+                    continue
+                current.append(line)
+
+        # Parse each block as TOML and attempt to update a configuration object with it.
+        for block in blocks:
+            config = Config()
+            block_str = "\n".join(block)
+            block_dict = tomllib.loads(block_str)
+            try:
+                config.update(block_dict)
+            except ConfigError as e:
+                raise AssertionError(f"{block_str}: {e}")
+
+            # Check there were no extra settings.
+            for record in recwarn:
+                msg = str(record.message)
+                if "unknown sections" in msg:
+                    raise AssertionError(f"{block_str}: {msg}")
+                if "unknown settings" in msg:
+                    raise AssertionError(f"{block_str}: {msg}")
+            recwarn.clear()

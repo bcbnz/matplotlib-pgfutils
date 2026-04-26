@@ -234,40 +234,35 @@ calling `setup_figure`.
 
 ### Extra tracking
 
-This is a comma-separated list of extra libraries to install file tracking on.
-See the [file tracking](file_tracking.md) documentation for more details.
+This is an array of strings naming extra libraries to install file tracking on. See the
+[file tracking](file_tracking.md) documentation for more details.
 
 
 ### Environment variables
 
-Environment variables to set can be specified using the multi-line option
-``environment``. Each line represents one environment variable in the format
-``name = value``:
+Environment variables to set can be specified using the table option `environment`. Each
+entry represents one environment variable:
 
 ```toml
 [pgfutils]
-environment = '''
-  name1 = "value1"
-  name2 = "value2"
-'''
+environment = {name1 = "value1", name2 = "value2"}
 ```
 
-Existing environment variables of the same name will be overwritten. This means that if
-you specify the same variable multiple times the last value will be used. For example,
-the configuration
+TOML requires inline tables as used in the previous example to be on a single line. If
+you prefer to split this over multiple lines, you can make `environment` an explicit
+table:
 
 ```toml
-[pgfutils]
-environment = '''
-  name1 = "value1"
-  name2 = "value2"
-  name1 = "value3"
-'''
+[pgfutils.environment]
+name1 = "value1"
+name2 = "value2"
 ```
 
-will result in `name1` being set to `value3`. The variables are set during the call to
-`setup_figure()`, so any libraries that read the environment variables must be imported
-after this call.
+Existing environment variables of the same name will be overwritten. This means that
+environment variables given in the configuration file will override existing values, and
+that environment variables given in the `setup_figure` call will override values from
+the configuration file. The variables are set during the call to `setup_figure()`, so
+any libraries that read the environment variables must be imported after this call.
 
 Note that the `PGFUTILS_TRACK_FILES` variable described in the [file tracking
 documentation](file_tracking.md) can be configured through this option, for example to
@@ -275,9 +270,7 @@ output tracked files to stdout:
 
 ```toml
 [pgfutils]
-environment = '''
-  PGFUTILS_TRACK_FILES = "1"
-'''
+environment = {PGFUTILS_TRACK_FILES = "1"}
 ```
 
 
@@ -288,35 +281,34 @@ it is a dependency. If it is in one of the directories given under the `data` ke
 any subdirectory of one of these directories, then it is counted as a dependency. The
 top-level directory (the directory the script was run from) is always included as a data
 directory, so you only need to specify directories outside the top-level directory.
-Multiple entries must be specified on separate lines of the configuration.
+These paths must be given as an array of strings, each corresponding to one path.
 
 ```toml
 [paths]
-data = '''
-  /data/common
-'''
+data = [
+  '/data/common'
+]
 ```
 
 Note that these directories are not added to any kind of search path, so any
 code which uses them still has to give a complete path.
 
-If you have Python code in other libraries you want to be able to import in
-your scripts, you can use the `pythonpath` option in the `paths` section of the
-configuration file to specify custom search paths for Python. This is a
-multi-line entry with one path per line.  The paths are inserted at the start
-of `sys.path` when you call `setup_figure()`. They are inserted in the order
-given in the configuration, which means the last path in the configuration will
-be the first entry in `sys.path`. They are not modified or checked in any way.
-Relative paths will therefore be interpreted by Python as being relative to the
-directory it was run from, which should be the top-level directory of your
-project.
+If you have Python code in other libraries you want to be able to import in your
+scripts, you can use the `pythonpath` option in the `paths` section of the configuration
+file to specify custom search paths for Python. This is an array of strings, each
+corresponding to one path entry. The paths are inserted at the start of `sys.path` when
+you call `setup_figure()`. They are inserted in the order given in the configuration,
+which means the last path in the configuration will be the first entry in `sys.path`.
+They are not modified or checked in any way.  Relative paths will therefore be
+interpreted by Python as being relative to the directory it was run from, which should
+be the top-level directory of your project.
 
 ```toml
 [paths]
-pythonpath = '''
-  pythonlib/
-  /usr/share/myotherlib
-'''
+pythonpath = [
+  'pythonlib/',
+  '/usr/share/myotherlib',
+]
 ```
 
 Python imports can also be handled by the [file tracking](file_tracking.md). If
@@ -324,13 +316,14 @@ enabled, any library imported from a directory (or subdirectory) specified in
 the `pythonpath` option is treated as a dependency and output as part of the
 file tracking details. If you have other libraries which are already in the
 Python path which you want to be tracked as dependencies, you can add the
-appropriate directories to the `extra_imports` option:
+appropriate directories to the `extra_imports` option. As with the other path settings,
+this must be an array of strings, each corresponding to a single path.
 
 ```toml
 [paths]
-extra_imports = '''
-   /home/username/.local/lib/
-'''
+extra_imports = [
+   '/home/username/.local/lib/'
+]
 ```
 
 
@@ -339,10 +332,10 @@ Matplotlib rcParams
 
 Matplotlib can be customised using its [rcParams][] system (this is how pgfutils does
 much of its setup). If you want to override rcParams settings, you can specify them in
-the `rcParams` section:
+the `rcparams` section:
 
 ```toml
-[rcParams]
+[rcparams]
 "figure.facecolor" = "blue"
 "xtick.labelsize" = 8
 ```

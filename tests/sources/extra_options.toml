@@ -8,6 +8,8 @@ text_height = "550 points"
 num_columns = 1
 columnsep = "10 points"
 margin = "2cm"
+preamble = ""
+preamble_substitute = false
 
 [pgfutils]
 font_family = "serif"
@@ -22,8 +24,6 @@ legend_border_color = [0.8, 0.8, 0.8]
 legend_background = [1, 1, 1]
 legend_opacity = 0.8
 legend_font_size = 10
-preamble = ""
-preamble_substitute = false
 
 [rcparams]
 

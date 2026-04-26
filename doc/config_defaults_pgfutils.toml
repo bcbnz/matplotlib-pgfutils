@@ -21,7 +21,7 @@ legend_font_size = 10
 separate_legend = false
 
 # Extra libraries to install file tracking on.
-extra_tracking = ""
+extra_tracking = []
 
 # Environment variables to set.
-environment = ""
+environment = {}

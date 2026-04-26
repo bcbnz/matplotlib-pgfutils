@@ -350,8 +350,8 @@ class PGFUtilsConfig(TypedDict):
     legend_opacity: float
     figure_background: Color
     axes_background: Color
-    extra_tracking: str
-    environment: str
+    extra_tracking: set[str]
+    environment: dict[str, str]
     separate_legend: bool
 
 
@@ -410,8 +410,8 @@ class Config:
             legend_opacity=0.8,
             figure_background=parse_color("transparent"),
             axes_background=parse_color("white"),
-            extra_tracking="",
-            environment="",
+            extra_tracking=set(),
+            environment={},
             separate_legend=False,
         )
         self.post_processing = dict(fix_raster_paths=True, tikzpicture=False)
@@ -543,8 +543,22 @@ class Config:
                     if args == (Path,):
                         for item in val:
                             section[key].add(Path(item).resolve())
+                    elif args == (str,):
+                        for item in val:
+                            section[key].add(str(item))
                     else:
                         raise RuntimeError(f"unhandled set type {args}")
+
+                # For a dictionary, handle based on the type of the items.
+                elif origin is dict:
+                    if not isinstance(val, dict):
+                        raise ConfigError(name, key, "value must be a dictionary")
+
+                    if args == (str, str):
+                        for k, v in val.items():
+                            section[key][str(k)] = str(v)
+                    else:
+                        raise RuntimeError(f"unhandled dict type {args}")
 
                 # Assume a string.
                 else:
@@ -713,26 +727,12 @@ def setup_figure(
         config.update({"pgfutils": kwargs})
 
     # Set environment variables specified in the configuration.
-    for line in config.pgfutils["environment"].splitlines():
-        line = line.strip()
-        if not line:
-            continue
-
-        # Check the variables are formatted correctly.
-        if "=" not in line:
-            raise ValueError(
-                "Environment variables should be in the form NAME=VALUE. "
-                f"The line '{line}' does not match this."
-            )
-
-        # And set them.
-        key, value = line.split("=", 1)
-        os.environ[key.strip()] = value.strip()
+    os.environ.update(config.pgfutils["environment"])
 
     # Install extra file trackers if desired.
-    extra = config.pgfutils["extra_tracking"].strip()
+    extra = config.pgfutils["extra_tracking"]
     if extra:
-        _install_extra_file_trackers(extra.split(","))
+        _install_extra_file_trackers(extra)
 
     # Reset our interactive flag on each call.
     _interactive = False

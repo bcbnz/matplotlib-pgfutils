@@ -7,7 +7,7 @@ os.environ["name1"] = "original value"
 
 from pgfutils import save, setup_figure
 
-setup_figure()
+setup_figure(environment={"name2": "value3"})
 
 import os
 
@@ -18,7 +18,7 @@ if name1 != "value1":
     raise ValueError(
         "Incorrect value ({}) for environment variable name1".format(name1)
     )
-if name2 != "value2":
+if name2 != "value3":
     raise ValueError(
         "Incorrect value ({}) for environment variable name2".format(name2)
     )

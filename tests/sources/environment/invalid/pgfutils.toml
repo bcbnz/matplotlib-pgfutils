@@ -1,8 +1,0 @@
-# SPDX-FileCopyrightText: Blair Bonnett
-# SPDX-License-Identifier: BSD-3-Clause
-
-[pgfutils]
-environment="""
-  line1=ok
-  line2 should fail
-"""
