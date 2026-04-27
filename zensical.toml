@@ -8,12 +8,13 @@ site_dir = "build/doc"
 repo_url = "https://github.com/bcbnz/matplotlib-pgfutils"
 
 nav = [
-  "index.md",
+  {"Introduction" = "index.md"},
   "usage.md",
   "config.md",
   "interactive.md",
   "file_tracking.md",
   "latexmk.md",
+  "advanced.md",
 ]
 
 [project.theme]
