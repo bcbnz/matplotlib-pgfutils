@@ -10,7 +10,7 @@ they can be processed via Makefiles) in order to get consistent-looking plots.
 
 """
 
-__version__ = "2.0.0.dev0"
+__version__ = "2.0.0"
 
 import ast
 import builtins
