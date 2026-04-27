@@ -6,7 +6,7 @@ name = "matplotlib-pgfutils"
 description = "Utilities for generating PGF figures from Matplotlib"
 dynamic = ["version"]
 readme = {file = "README.md", content-type="text/markdown"}
-license = {text = "BSD-3-Clause"}
+license = "BSD-3-Clause"
 requires-python = ">=3.12"
 dependencies = [
   "matplotlib>=3.9.0"
