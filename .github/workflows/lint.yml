@@ -29,3 +29,7 @@ jobs:
       - name: Check formatting
         if: always()
         run: ruff format --check
+
+      - name: Check REUSE compliance
+        if: always()
+        uses: fsfe/reuse-action@v6
