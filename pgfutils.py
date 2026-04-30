@@ -901,52 +901,59 @@ def save(figure: "matplotlib.figure.Figure|None" = None):
     # Figures to save.
     to_save = [("main_figure", figure, None)]
 
-    # Go through and fix up a few little quirks on the axes within this figure.
+    # Find all legends in this figure.
+    legends = list(figure.legends)
     for axes in figure.get_axes():
-        # Check if these axes have a legend.
         legend = axes.get_legend()
         if legend:
-            # Want to save the legend as a separate figure.
-            if config.pgfutils["separate_legend"]:
-                # Create a new figure to hold the legend with empty axes.
-                legend_fig = plt.figure()
-                legend_ax = legend_fig.add_subplot()
-                legend_ax.axis("off")
+            legends.append(legend)
 
-                # Regenerate the legend on the new axes, allowing it to use the whole
-                # figure. Removing it from the original axes and then using add_artist
-                # on these axes seems to get the bounding box wrong.
-                legend_standalone = legend_ax.legend(
-                    *legend.axes.get_legend_handles_labels(),
-                    bbox_to_anchor=(0, 0, 1, 1),
-                    bbox_transform=legend_fig.transFigure,
-                    ncols=legend._ncols,
-                    numpoints=legend.numpoints,
-                    scatterpoints=legend.scatterpoints,
-                )
+    # Configure the legends.
+    for legend in legends:
+        # Want to save the legend as a separate figure.
+        if config.pgfutils["separate_legend"]:
+            # Create a new figure to hold the legend with empty axes.
+            legend_fig = plt.figure()
+            legend_ax = legend_fig.add_subplot()
+            legend_ax.axis("off")
 
-                # Measure its bounding box.
-                bbox = legend_standalone.get_tightbbox()
-                if not bbox:
-                    raise RuntimeError("could not determine legend bounding box")
+            # Regenerate the legend on the new axes, allowing it to use the whole
+            # figure. Removing it from the original axes and then using add_artist
+            # on these axes seems to get the bounding box wrong.
+            legend_standalone = legend_ax.legend(
+                legend.legend_handles,
+                [text.get_text() for text in legend.texts],
+                bbox_to_anchor=(0, 0, 1, 1),
+                bbox_transform=legend_fig.transFigure,
+                ncols=legend._ncols,
+                numpoints=legend.numpoints,
+                scatterpoints=legend.scatterpoints,
+            )
 
-                # This is in pixels; convert to inches as savefig() will need.
-                bbox = bbox.transformed(legend_fig.dpi_scale_trans.inverted())
+            # Measure its bounding box.
+            bbox = legend_standalone.get_tightbbox()
+            if not bbox:
+                raise RuntimeError("could not determine legend bounding box")
 
-                # Remove the original legend and replace the reference.
-                legend.remove()
-                legend = legend_standalone
+            # This is in pixels; convert to inches as savefig() will need.
+            bbox = bbox.transformed(legend_fig.dpi_scale_trans.inverted())
 
-                # And save the standalone figure as a legend.
-                to_save.append(("legend", legend_fig, bbox))
+            # Remove the original legend and replace the reference.
+            legend.remove()
+            legend = legend_standalone
 
-            # There are no rcParams for the legend properties; set them directly.
-            frame = legend.get_frame()
-            frame.set_linewidth(config.pgfutils["legend_border_width"])
-            frame.set_alpha(config.pgfutils["legend_opacity"])
-            frame.set_ec(config.pgfutils["legend_border_color"])
-            frame.set_fc(config.pgfutils["legend_background"])
+            # And save the standalone figure as a legend.
+            to_save.append(("legend", legend_fig, bbox))
 
+        # There are no rcParams for the legend properties; set them directly.
+        frame = legend.get_frame()
+        frame.set_linewidth(config.pgfutils["legend_border_width"])
+        frame.set_alpha(config.pgfutils["legend_opacity"])
+        frame.set_ec(config.pgfutils["legend_border_color"])
+        frame.set_fc(config.pgfutils["legend_background"])
+
+    # Go through and fix up a few little quirks on the axes within this figure.
+    for axes in figure.get_axes():
         # Some PDF viewers show white lines through vector colorbars. This is a bug in
         # the viewers, but can be worked around by forcing the edge of the patches in
         # the colorbar to have the same colour as their faces.  This doesn't work with

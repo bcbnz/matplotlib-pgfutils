@@ -151,3 +151,33 @@ def test_separate_legend():
         assert legend["stroke"] == approx([1, 0.5, 0]), "incorrect border colour"
         assert legend["strokeopacity"] == approx(0.7), "incorrect border opacity"
         assert legend["linewidth"] == approx(4, abs=0.1), "incorrect border width"
+
+
+def test_separate_figure_legend():
+    """Check plot with separate figure legend..."""
+    with build_pypgf(srcdir, "plot_with_separate_figure_legend.py") as res:
+        assert res.returncode == 0, (
+            f"Building {srcdir / 'plot_with_separate_figure_legend.pypgf'} failed."
+        )
+
+        # Should be no legend in main figure.
+        legend = extract_legend(srcdir / "plot_with_separate_figure_legend.pypgf")
+        assert legend is None, "legend retained in main figure"
+
+        # Get the legend from the separate output.
+        legend = extract_legend(
+            srcdir / "plot_with_separate_figure_legend_legend0.pypgf"
+        )
+
+        # Check the text sizes are correct.
+        assert legend["text_sizes"] == approx([14, 14, 14]), "incorrect font sizes"
+
+        # Now check the values are correct. Note the increased margin for the
+        # line size -- the output value often seems to be a wee way off the
+        # number. I'd guess this is due to some rounding in the exporter. At
+        # the end of the day 0.1 of a point is not that noticeable!
+        assert legend["fill"] == approx([0, 0.5, 1]), "incorrect background colour"
+        assert legend["fillopacity"] == approx(0.7), "incorrect background opacity"
+        assert legend["stroke"] == approx([1, 0.5, 0]), "incorrect border colour"
+        assert legend["strokeopacity"] == approx(0.7), "incorrect border opacity"
+        assert legend["linewidth"] == approx(4, abs=0.1), "incorrect border width"
